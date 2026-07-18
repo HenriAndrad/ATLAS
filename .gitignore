@@ -13,8 +13,10 @@ backend/.env
 .vscode/
 .DS_Store
 
+#re-vendo 
 node_modules/
 frontend/node_modules/
 backend/.venv/
 .venv/
+dist/
 __pycache__/
