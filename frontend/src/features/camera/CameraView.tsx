@@ -12,17 +12,20 @@ import { APP_NAME, type SupportedLanguage } from "../../core/constants/appConsta
 interface CameraViewProps {
   targetLanguage: SupportedLanguage;
   onChangeLanguage: (lang: SupportedLanguage) => void;
+  /** Disparado sempre que o aluno toca no 🔊 para ouvir uma tradução. */
+  onWordSpoken?: (entry: { original: string; translated: string }) => void;
 }
 
-/// Tela principal: abre a câmera automaticamente e exibe o preview
-/// preenchendo toda a área disponível (estilo Google Lens), sem
-/// distorcer a imagem, com detecção de objetos, tradução, seletor
+/// Tela da câmera: mostra um botão "Iniciar câmera" e, depois de
+/// acionado, exibe o preview preenchendo toda a área disponível
+/// (estilo Google Lens), com detecção de objetos, tradução, seletor
 /// de idioma e leitura em voz alta do objeto apontado.
 ///
-/// Etapa 6 escopo: tudo acima. OCR entra em etapa futura — não
-/// implementado aqui de propósito.
-export function CameraView({ targetLanguage, onChangeLanguage }: CameraViewProps) {
-  const { videoRef, status, errorMessage, retry } = useCamera();
+/// Etapa 7 escopo: câmera sob demanda (não abre mais sozinha, já que
+/// agora vive dentro da aba "Detector" da navegação). OCR entra em
+/// etapa futura — não implementado aqui de propósito.
+export function CameraView({ targetLanguage, onChangeLanguage, onWordSpoken }: CameraViewProps) {
+  const { videoRef, status, errorMessage, start, retry } = useCamera();
   const { status: modelStatus, detections } = useObjectDetection(
     videoRef,
     status === "ready",
@@ -41,12 +44,24 @@ export function CameraView({ targetLanguage, onChangeLanguage }: CameraViewProps
     <div
       style={{
         position: "relative",
-        width: "100vw",
-        height: "100vh",
+        width: "100%",
+        height: "100%",
         background: "#000",
         overflow: "hidden",
       }}
     >
+      {status === "idle" && (
+        <div style={idleContainerStyle}>
+          <span style={idleIconStyle}>📷</span>
+          <p style={idleTextStyle}>
+            Aponte a câmera para um objeto e veja a tradução em tempo real.
+          </p>
+          <button onClick={start} style={startButtonStyle}>
+            Iniciar câmera
+          </button>
+        </div>
+      )}
+
       <video
         ref={videoRef}
         autoPlay
@@ -83,12 +98,18 @@ export function CameraView({ targetLanguage, onChangeLanguage }: CameraViewProps
         <SpeakButton
           disabled={!primaryTranslatedText}
           onClick={() => {
-            if (primaryTranslatedText) speakText(primaryTranslatedText, targetLanguage);
+            if (primaryTranslatedText && primaryDetection) {
+              speakText(primaryTranslatedText, targetLanguage);
+              onWordSpoken?.({
+                original: primaryDetection.class,
+                translated: primaryTranslatedText,
+              });
+            }
           }}
         />
       )}
 
-      {status !== "ready" && (
+      {status !== "ready" && status !== "idle" && (
         <div
           style={{
             position: "absolute",
@@ -130,6 +151,41 @@ export function CameraView({ targetLanguage, onChangeLanguage }: CameraViewProps
     </div>
   );
 }
+
+const idleContainerStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 16,
+  padding: 32,
+  textAlign: "center",
+  zIndex: 1,
+};
+
+const idleIconStyle: CSSProperties = {
+  fontSize: 48,
+};
+
+const idleTextStyle: CSSProperties = {
+  color: "rgba(255, 255, 255, 0.8)",
+  fontFamily: "system-ui, sans-serif",
+  fontSize: 15,
+  maxWidth: 260,
+};
+
+const startButtonStyle: CSSProperties = {
+  padding: "16px 32px",
+  borderRadius: 28,
+  border: "none",
+  background: "#3B82F6",
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: 700,
+  cursor: "pointer",
+};
 
 const topBarStyle: CSSProperties = {
   position: "absolute",

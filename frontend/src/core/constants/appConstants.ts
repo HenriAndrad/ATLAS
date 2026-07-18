@@ -7,5 +7,5 @@ export const ACCENT_COLOR = "#3B82F6";
 // (configurada em Settings > Secrets and variables > Actions > Variables).
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
-export const SUPPORTED_LANGUAGES = ["pt", "en", "es", "de"] as const;
+export const SUPPORTED_LANGUAGES = ["pt", "en", "es", "de", "fr", "ht"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];

@@ -7,6 +7,8 @@ const LANGUAGE_TO_BCP47: Record<SupportedLanguage, string> = {
   en: "en-US",
   es: "es-ES",
   de: "de-DE",
+  fr: "fr-FR",
+  ht: "ht-HT",
 };
 
 /// Lê `text` em voz alta usando a síntese de voz nativa do navegador.

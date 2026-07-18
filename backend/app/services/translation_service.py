@@ -9,6 +9,8 @@ _DEEPL_LANGUAGE_CODES = {
     "en": "EN-US",
     "es": "ES",
     "de": "DE",
+    "fr": "FR",
+    "ht": "HT",
 }
 
 

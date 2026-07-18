@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 export type CameraStatus =
+  | "idle"
   | "requesting"
   | "ready"
   | "denied"
@@ -14,7 +15,7 @@ export type CameraStatus =
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const [status, setStatus] = useState<CameraStatus>("requesting");
+  const [status, setStatus] = useState<CameraStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const stopCamera = () => {
@@ -58,10 +59,9 @@ export function useCamera() {
   };
 
   useEffect(() => {
-    startCamera();
     return () => stopCamera();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { videoRef, status, errorMessage, retry: startCamera };
+  return { videoRef, status, errorMessage, start: startCamera, retry: startCamera };
 }

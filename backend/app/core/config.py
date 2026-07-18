@@ -14,5 +14,14 @@ class Settings(BaseSettings):
     deepl_api_key: str = ""
     deepl_api_url: str = "https://api-free.deepl.com/v2/translate"
 
+    # Connection string do Postgres (Supabase). Vazio = recursos de
+    # Biblioteca ficam indisponíveis, mas o resto do app funciona normal.
+    database_url: str = ""
+
+    # Credenciais da área do administrador. admin_password vazio =
+    # área do admin fica desabilitada (todas as requisições retornam 503).
+    admin_username: str = "admin"
+    admin_password: str = ""
+
 
 settings = Settings()

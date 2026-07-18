@@ -6,6 +6,8 @@ const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
   en: "EN",
   es: "ES",
   de: "DE",
+  fr: "FR",
+  ht: "HT",
 };
 
 interface LanguageSelectorProps {
@@ -39,10 +41,12 @@ export function LanguageSelector({ selected, onSelect }: LanguageSelectorProps) 
 
 const containerStyle: CSSProperties = {
   display: "flex",
+  flexWrap: "wrap",
   gap: 4,
+  maxWidth: 210,
   background: "rgba(0, 0, 0, 0.4)",
   padding: 4,
-  borderRadius: 20,
+  borderRadius: 16,
   backdropFilter: "blur(8px)",
 };
 
