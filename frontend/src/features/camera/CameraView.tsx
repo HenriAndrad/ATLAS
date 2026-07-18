@@ -2,8 +2,11 @@ import type { CSSProperties } from "react";
 import { useCamera } from "./useCamera";
 import { useObjectDetection } from "../detection/useObjectDetection";
 import { DetectionOverlay } from "../detection/DetectionOverlay";
+import { getPrimaryDetection } from "../detection/getPrimaryDetection";
 import { useTranslatedLabels } from "../translation/useTranslatedLabels";
 import { LanguageSelector } from "../settings/LanguageSelector";
+import { SpeakButton } from "../tts/SpeakButton";
+import { speakText } from "../tts/speakText";
 import { APP_NAME, type SupportedLanguage } from "../../core/constants/appConstants";
 
 interface CameraViewProps {
@@ -13,12 +16,11 @@ interface CameraViewProps {
 
 /// Tela principal: abre a câmera automaticamente e exibe o preview
 /// preenchendo toda a área disponível (estilo Google Lens), sem
-/// distorcer a imagem, com detecção de objetos, tradução e seletor
-/// de idioma em tempo real.
+/// distorcer a imagem, com detecção de objetos, tradução, seletor
+/// de idioma e leitura em voz alta do objeto apontado.
 ///
-/// Etapa 5 escopo: preview + detecção + tradução + seletor de idioma
-/// + barra superior. OCR e áudio entram em etapas futuras — não
-/// implementados aqui de propósito.
+/// Etapa 6 escopo: tudo acima. OCR entra em etapa futura — não
+/// implementado aqui de propósito.
 export function CameraView({ targetLanguage, onChangeLanguage }: CameraViewProps) {
   const { videoRef, status, errorMessage, retry } = useCamera();
   const { status: modelStatus, detections } = useObjectDetection(
@@ -29,6 +31,11 @@ export function CameraView({ targetLanguage, onChangeLanguage }: CameraViewProps
     detections.map((d) => d.class),
     targetLanguage,
   );
+
+  const primaryDetection = getPrimaryDetection(detections, videoRef.current);
+  const primaryTranslatedText = primaryDetection
+    ? translations[primaryDetection.class] ?? primaryDetection.class
+    : null;
 
   return (
     <div
@@ -70,6 +77,15 @@ export function CameraView({ targetLanguage, onChangeLanguage }: CameraViewProps
 
       {status === "ready" && modelStatus === "loading" && (
         <div style={modelLoadingBadgeStyle}>Carregando modelo de detecção...</div>
+      )}
+
+      {status === "ready" && (
+        <SpeakButton
+          disabled={!primaryTranslatedText}
+          onClick={() => {
+            if (primaryTranslatedText) speakText(primaryTranslatedText, targetLanguage);
+          }}
+        />
       )}
 
       {status !== "ready" && (

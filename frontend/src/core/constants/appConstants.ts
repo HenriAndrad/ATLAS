@@ -1,4 +1,4 @@
-export const APP_NAME = "Vision Translator AI";
+export const APP_NAME = "ATLAS";
 
 export const ACCENT_COLOR = "#3B82F6";
 
