@@ -10,5 +10,9 @@ class Settings(BaseSettings):
     # Origem do frontend em desenvolvimento (Vite roda por padrão na 5173).
     cors_allowed_origins: list[str] = ["http://localhost:5173"]
 
+    # Chave gratuita em https://www.deepl.com/pro-api
+    deepl_api_key: str = ""
+    deepl_api_url: str = "https://api-free.deepl.com/v2/translate"
+
 
 settings = Settings()
