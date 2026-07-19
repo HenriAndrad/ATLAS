@@ -1,6 +1,13 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "../../core/constants/appConstants";
+import {
+  COLOR_BACKGROUND,
+  COLOR_BORDER,
+  COLOR_SURFACE,
+  COLOR_TEXT_PRIMARY,
+  COLOR_TEXT_SECONDARY,
+} from "../../core/constants/appConstants";
 
 const LANGUAGE_DISPLAY: Record<SupportedLanguage, { name: string; flag: string }> = {
   pt: { name: "Português", flag: "🇧🇷" },
@@ -37,16 +44,16 @@ export function LibraryScreen() {
 const containerStyle: CSSProperties = {
   padding: 20,
   paddingBottom: 96,
-  color: "#fff",
+  color: COLOR_TEXT_PRIMARY,
   fontFamily: "system-ui, sans-serif",
   height: "100%",
   overflowY: "auto",
-  background: "#0a0a0a",
+  background: COLOR_BACKGROUND,
 };
 
 const titleStyle: CSSProperties = { fontSize: 24, fontWeight: 700, margin: 0 };
 const subtitleStyle: CSSProperties = {
-  color: "rgba(255, 255, 255, 0.6)",
+  color: COLOR_TEXT_SECONDARY,
   fontSize: 14,
   marginTop: 4,
   marginBottom: 20,
@@ -65,10 +72,10 @@ const cardStyle: CSSProperties = {
   gap: 6,
   padding: "24px 12px",
   borderRadius: 20,
-  border: "1px solid rgba(255, 255, 255, 0.08)",
-  background: "rgba(255, 255, 255, 0.05)",
-  boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
-  color: "#fff",
+  border: `1px solid ${COLOR_BORDER}`,
+  background: COLOR_SURFACE,
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+  color: COLOR_TEXT_PRIMARY,
   textDecoration: "none",
 };
 

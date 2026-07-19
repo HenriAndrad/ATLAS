@@ -4,6 +4,13 @@ export const ACCENT_COLOR = "#3B82F6";
 export const ACCENT_GREEN = "#10B981";
 export const GRADIENT_PRIMARY = "linear-gradient(135deg, #3B82F6 0%, #10B981 100%)";
 
+// Paleta do tema claro (padrão do app)
+export const COLOR_BACKGROUND = "#F3F4F6";
+export const COLOR_SURFACE = "#FFFFFF";
+export const COLOR_BORDER = "#E5E7EB";
+export const COLOR_TEXT_PRIMARY = "#111827";
+export const COLOR_TEXT_SECONDARY = "#6B7280";
+
 // Abaixo deste score, nem mostramos a caixa (ruído/falso positivo).
 export const MIN_DETECTION_SCORE = 0.5;
 // Abaixo deste score, mostramos "objeto não identificado" em vez de

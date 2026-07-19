@@ -15,7 +15,7 @@ import {
 } from "./adminApi";
 import { fetchLibrary } from "../library/libraryApi";
 import type { LibraryCategory } from "../library/types";
-import { ACCENT_COLOR, GRADIENT_PRIMARY, SUPPORTED_LANGUAGES } from "../../core/constants/appConstants";
+import { ACCENT_COLOR, COLOR_BACKGROUND, COLOR_BORDER, COLOR_SURFACE, COLOR_TEXT_PRIMARY, COLOR_TEXT_SECONDARY, GRADIENT_PRIMARY, SUPPORTED_LANGUAGES } from "../../core/constants/appConstants";
 
 const TRANSLATABLE_LANGUAGES = SUPPORTED_LANGUAGES.filter((lang) => lang !== "en");
 
@@ -307,8 +307,8 @@ const loginContainerStyle: CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   padding: 24,
-  background: "#0a0a0a",
-  color: "#fff",
+  background: COLOR_BACKGROUND,
+  color: COLOR_TEXT_PRIMARY,
   fontFamily: "system-ui, sans-serif",
 };
 
@@ -317,8 +317,8 @@ const dashboardContainerStyle: CSSProperties = {
   overflowY: "auto",
   padding: 20,
   paddingBottom: 96,
-  background: "#0a0a0a",
-  color: "#fff",
+  background: COLOR_BACKGROUND,
+  color: COLOR_TEXT_PRIMARY,
   fontFamily: "system-ui, sans-serif",
 };
 
@@ -342,9 +342,9 @@ const formStyle: CSSProperties = {
 const inputStyle: CSSProperties = {
   padding: "10px 12px",
   borderRadius: 8,
-  border: "1px solid rgba(255, 255, 255, 0.15)",
-  background: "rgba(255, 255, 255, 0.05)",
-  color: "#fff",
+  border: `1px solid ${COLOR_BORDER}`,
+  background: COLOR_SURFACE,
+  color: COLOR_TEXT_PRIMARY,
   fontSize: 14,
 };
 
@@ -362,15 +362,15 @@ const primaryButtonStyle: CSSProperties = {
 const logoutButtonStyle: CSSProperties = {
   padding: "6px 14px",
   borderRadius: 8,
-  border: "1px solid rgba(255, 255, 255, 0.2)",
+  border: `1px solid ${COLOR_BORDER}`,
   background: "transparent",
-  color: "#fff",
+  color: COLOR_TEXT_PRIMARY,
   fontSize: 13,
   cursor: "pointer",
 };
 
 const errorStyle: CSSProperties = { color: "#f87171", fontSize: 13 };
-const statusStyle: CSSProperties = { color: "rgba(255, 255, 255, 0.7)", fontSize: 13 };
+const statusStyle: CSSProperties = { color: COLOR_TEXT_SECONDARY, fontSize: 13 };
 
 const categoryBlockStyle: CSSProperties = { marginBottom: 16 };
 const categoryNameStyle: CSSProperties = { fontWeight: 700, fontSize: 14, marginBottom: 6 };
@@ -380,7 +380,7 @@ const wordRowStyle: CSSProperties = {
   alignItems: "center",
   justifyContent: "space-between",
   padding: "8px 0",
-  borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+  borderBottom: `1px solid ${COLOR_BORDER}`,
   fontSize: 13,
 };
 

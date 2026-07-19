@@ -3,7 +3,15 @@ import { Link, useParams } from "react-router-dom";
 import { fetchLibrary } from "./libraryApi";
 import type { LibraryCategory } from "./types";
 import { speakText } from "../tts/speakText";
-import { ACCENT_COLOR, type SupportedLanguage } from "../../core/constants/appConstants";
+import {
+  ACCENT_COLOR,
+  COLOR_BACKGROUND,
+  COLOR_BORDER,
+  COLOR_SURFACE,
+  COLOR_TEXT_PRIMARY,
+  COLOR_TEXT_SECONDARY,
+  type SupportedLanguage,
+} from "../../core/constants/appConstants";
 
 const LANGUAGE_NAMES: Record<string, string> = {
   pt: "Português",
@@ -89,11 +97,11 @@ export function LanguageLibraryScreen() {
 const containerStyle: CSSProperties = {
   padding: 20,
   paddingBottom: 96,
-  color: "#fff",
+  color: COLOR_TEXT_PRIMARY,
   fontFamily: "system-ui, sans-serif",
   height: "100%",
   overflowY: "auto",
-  background: "#0a0a0a",
+  background: COLOR_BACKGROUND,
 };
 
 const backLinkStyle: CSSProperties = {
@@ -105,7 +113,7 @@ const backLinkStyle: CSSProperties = {
 const titleStyle: CSSProperties = { fontSize: 24, fontWeight: 700, margin: "8px 0 20px" };
 
 const messageStyle: CSSProperties = {
-  color: "rgba(255, 255, 255, 0.5)",
+  color: COLOR_TEXT_SECONDARY,
   fontSize: 14,
   marginTop: 24,
 };
@@ -126,15 +134,15 @@ const wordCardStyle: CSSProperties = {
   gap: 4,
   padding: 12,
   borderRadius: 12,
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-  background: "rgba(255, 255, 255, 0.05)",
-  color: "#fff",
+  border: `1px solid ${COLOR_BORDER}`,
+  background: COLOR_SURFACE,
+  color: COLOR_TEXT_PRIMARY,
   textAlign: "left",
   cursor: "pointer",
   position: "relative",
 };
 
 const wordEmojiStyle: CSSProperties = { fontSize: 24 };
-const wordOriginalStyle: CSSProperties = { fontSize: 12, color: "rgba(255, 255, 255, 0.5)" };
+const wordOriginalStyle: CSSProperties = { fontSize: 12, color: COLOR_TEXT_SECONDARY };
 const wordTranslatedStyle: CSSProperties = { fontSize: 14, fontWeight: 600 };
 const wordSpeakerStyle: CSSProperties = { position: "absolute", top: 10, right: 10, fontSize: 14 };

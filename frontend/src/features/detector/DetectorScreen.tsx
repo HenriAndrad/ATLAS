@@ -2,16 +2,12 @@ import { useState, type CSSProperties } from "react";
 import { CameraView } from "../camera/CameraView";
 import { HistoryPanel } from "./HistoryPanel";
 import { useDetectionHistory } from "./useDetectionHistory";
-import type { SupportedLanguage } from "../../core/constants/appConstants";
-
-interface DetectorScreenProps {
-  targetLanguage: SupportedLanguage;
-  onChangeLanguage: (lang: SupportedLanguage) => void;
-}
+import { useLanguageContext } from "../../core/context/LanguageContext";
 
 /// Aba "Detector": aponta a câmera para um objeto e vê a tradução em
 /// tempo real, com histórico de palavras ouvidas e favoritos.
-export function DetectorScreen({ targetLanguage, onChangeLanguage }: DetectorScreenProps) {
+export function DetectorScreen() {
+  const { targetLanguage, setTargetLanguage } = useLanguageContext();
   const { history, addEntry, toggleFavorite } = useDetectionHistory();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
@@ -19,7 +15,7 @@ export function DetectorScreen({ targetLanguage, onChangeLanguage }: DetectorScr
     <div style={{ position: "relative", height: "100%" }}>
       <CameraView
         targetLanguage={targetLanguage}
-        onChangeLanguage={onChangeLanguage}
+        onChangeLanguage={setTargetLanguage}
         onWordSpoken={(entry) => addEntry(entry.original, entry.translated, targetLanguage)}
       />
 

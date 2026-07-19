@@ -1,4 +1,5 @@
 import type { SupportedLanguage } from "../../core/constants/appConstants";
+import { isSoundEnabled } from "../settings/useAppSettings";
 
 // Mapeia os códigos de idioma do app para os códigos BCP 47 que a
 // Web Speech API espera, garantindo a pronúncia no idioma certo.
@@ -15,6 +16,7 @@ const LANGUAGE_TO_BCP47: Record<SupportedLanguage, string> = {
 /// Cancela qualquer fala em andamento antes de começar a nova, para
 /// não acumular falas sobrepostas em cliques repetidos.
 export function speakText(text: string, language: SupportedLanguage): void {
+  if (!isSoundEnabled()) return;
   if (!("speechSynthesis" in window)) return;
 
   window.speechSynthesis.cancel();

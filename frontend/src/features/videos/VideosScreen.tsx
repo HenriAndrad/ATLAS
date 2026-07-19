@@ -1,4 +1,10 @@
 import type { CSSProperties } from "react";
+import {
+  COLOR_BACKGROUND,
+  COLOR_BORDER,
+  COLOR_TEXT_PRIMARY,
+  COLOR_TEXT_SECONDARY,
+} from "../../core/constants/appConstants";
 
 /// Aba "Vídeos": lista vídeos educacionais (aulas, dicas, desafios).
 ///
@@ -25,16 +31,16 @@ export function VideosScreen() {
 const containerStyle: CSSProperties = {
   padding: 20,
   paddingBottom: 96,
-  color: "#fff",
+  color: COLOR_TEXT_PRIMARY,
   fontFamily: "system-ui, sans-serif",
   height: "100%",
   overflowY: "auto",
-  background: "#0a0a0a",
+  background: COLOR_BACKGROUND,
 };
 
 const titleStyle: CSSProperties = { fontSize: 24, fontWeight: 700, margin: 0 };
 const subtitleStyle: CSSProperties = {
-  color: "rgba(255, 255, 255, 0.6)",
+  color: COLOR_TEXT_SECONDARY,
   fontSize: 14,
   marginTop: 4,
   marginBottom: 20,
@@ -48,13 +54,13 @@ const emptyStateStyle: CSSProperties = {
   gap: 12,
   padding: "48px 24px",
   borderRadius: 16,
-  border: "1px dashed rgba(255, 255, 255, 0.15)",
+  border: `1px dashed ${COLOR_BORDER}`,
   textAlign: "center",
 };
 
 const emptyIconStyle: CSSProperties = { fontSize: 40 };
 const emptyTextStyle: CSSProperties = {
-  color: "rgba(255, 255, 255, 0.6)",
+  color: COLOR_TEXT_SECONDARY,
   fontSize: 14,
   maxWidth: 240,
 };
