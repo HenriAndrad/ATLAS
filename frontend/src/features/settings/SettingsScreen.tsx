@@ -2,7 +2,9 @@ import type { CSSProperties, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Globe, Sun, Type, Bell, Volume2, Accessibility, ChevronRight } from "lucide-react";
 import { useLanguageContext } from "../../core/context/LanguageContext";
-import { useAppSettings, type FontSize } from "./useAppSettings";
+import { useAppSettingsContext } from "../../core/context/AppSettingsContext";
+import { useTranslation } from "../../core/i18n/useTranslation";
+import type { FontSize } from "./useAppSettings";
 import {
   ACCENT_COLOR,
   COLOR_BACKGROUND,
@@ -29,14 +31,15 @@ const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
 /// aguardando a implementação visual completa (tema escuro/fonte).
 export function SettingsScreen() {
   const { targetLanguage } = useLanguageContext();
-  const { settings, updateSetting } = useAppSettings();
+  const { settings, updateSetting } = useAppSettingsContext();
+  const t = useTranslation();
 
   return (
     <div style={containerStyle}>
-      <h1 style={titleStyle}>Configurações</h1>
-      <p style={subtitleStyle}>Personalize sua experiência</p>
+      <h1 style={titleStyle}>{t("settings.title")}</h1>
+      <p style={subtitleStyle}>{t("settings.subtitle")}</p>
 
-      <Section label="Idioma">
+      <Section label={t("settings.language")}>
         <Link to="/idiomas" style={rowLinkStyle}>
           <span style={{ ...iconBadgeStyle, background: "#DBEAFE" }}>
             <Globe size={16} color="#3B82F6" />
@@ -46,24 +49,24 @@ export function SettingsScreen() {
         </Link>
       </Section>
 
-      <Section label="Tema">
+      <Section label={t("settings.theme")}>
         <Row
           Icon={Sun}
           iconColor="#D97706"
           iconBg="#FEF3C7"
-          label="Modo Claro"
+          label={t("settings.themeLight")}
           checked={settings.theme === "light"}
           onChange={(checked) => updateSetting("theme", checked ? "light" : "dark")}
         />
       </Section>
 
-      <Section label="Tamanho da fonte">
+      <Section label={t("settings.fontSize")}>
         <div style={fontSizeCardStyle}>
           <div style={fontSizeHeaderStyle}>
             <span style={{ ...iconBadgeStyle, background: "#D1FAE5" }}>
               <Type size={16} color="#059669" />
             </span>
-            <span style={rowTextStyle}>Tamanho do texto</span>
+            <span style={rowTextStyle}>{t("settings.fontSize")}</span>
           </div>
           <div style={fontSizeOptionsStyle}>
             {(["sm", "md", "lg"] as FontSize[]).map((size) => (
@@ -84,12 +87,12 @@ export function SettingsScreen() {
         </div>
       </Section>
 
-      <Section label="Notificações">
+      <Section label={t("settings.notifications")}>
         <Row
           Icon={Bell}
           iconColor="#6B7280"
           iconBg="#F3F4F6"
-          label="Lembretes diários"
+          label={t("settings.dailyReminders")}
           checked={settings.dailyReminders}
           onChange={(checked) => updateSetting("dailyReminders", checked)}
         />
@@ -97,18 +100,18 @@ export function SettingsScreen() {
           Icon={Volume2}
           iconColor="#6B7280"
           iconBg="#F3F4F6"
-          label="Sons"
+          label={t("settings.sounds")}
           checked={settings.soundEnabled}
           onChange={(checked) => updateSetting("soundEnabled", checked)}
         />
       </Section>
 
-      <Section label="Acessibilidade">
+      <Section label={t("settings.accessibility")}>
         <Row
           Icon={Accessibility}
           iconColor="#6B7280"
           iconBg="#F3F4F6"
-          label="Alto contraste"
+          label={t("settings.highContrast")}
           checked={settings.highContrast}
           onChange={(checked) => updateSetting("highContrast", checked)}
         />

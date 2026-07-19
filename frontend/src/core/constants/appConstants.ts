@@ -4,12 +4,14 @@ export const ACCENT_COLOR = "#3B82F6";
 export const ACCENT_GREEN = "#10B981";
 export const GRADIENT_PRIMARY = "linear-gradient(135deg, #3B82F6 0%, #10B981 100%)";
 
-// Paleta do tema claro (padrão do app)
-export const COLOR_BACKGROUND = "#F3F4F6";
-export const COLOR_SURFACE = "#FFFFFF";
-export const COLOR_BORDER = "#E5E7EB";
-export const COLOR_TEXT_PRIMARY = "#111827";
-export const COLOR_TEXT_SECONDARY = "#6B7280";
+// Paleta do tema (claro por padrão) — os valores reais vêm de
+// index.css via variáveis CSS, o que permite o modo escuro em
+// Configurações mudar essas cores em tempo real, em todo o app.
+export const COLOR_BACKGROUND = "var(--atlas-color-background)";
+export const COLOR_SURFACE = "var(--atlas-color-surface)";
+export const COLOR_BORDER = "var(--atlas-color-border)";
+export const COLOR_TEXT_PRIMARY = "var(--atlas-color-text-primary)";
+export const COLOR_TEXT_SECONDARY = "var(--atlas-color-text-secondary)";
 
 // Abaixo deste score, nem mostramos a caixa (ruído/falso positivo).
 export const MIN_DETECTION_SCORE = 0.5;

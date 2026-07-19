@@ -6,6 +6,7 @@ import { DetectionOverlay } from "../detection/DetectionOverlay";
 import { getPrimaryDetection } from "../detection/getPrimaryDetection";
 import { useTranslatedLabels } from "../translation/useTranslatedLabels";
 import { speakText } from "../tts/speakText";
+import { useTranslation } from "../../core/i18n/useTranslation";
 import {
   ACCENT_COLOR,
   COLOR_BACKGROUND,
@@ -26,25 +27,19 @@ export interface RecentDetectionEntry {
 
 interface CameraViewProps {
   targetLanguage: SupportedLanguage;
-  /** Disparado sempre que o aluno toca no 🔊 para ouvir uma tradução. */
   onWordSpoken?: (entry: { original: string; translated: string }) => void;
-  /** Últimas palavras ouvidas, mostradas na tela antes de abrir a câmera. */
   recentEntries?: RecentDetectionEntry[];
 }
 
-const STATUS_CAPTION: Record<string, string> = {
-  idle: "Câmera desativada",
-  requesting: "Solicitando acesso...",
-  denied: "Acesso à câmera negado",
-  unavailable: "Nenhuma câmera encontrada",
-  error: "Erro ao acessar a câmera",
-};
-
-/// Tela do Detector: antes de ligar a câmera, mostra um estado inicial
-/// com botão "Abrir Câmera" e instruções — igual ao layout de
-/// referência. Depois de ligada, mostra o preview em tela cheia com
-/// detecção de objetos, tradução e leitura em voz alta.
+/// Tela do Detector. IMPORTANTE: o elemento <video> é SEMPRE renderizado
+/// (só escondido com display:none quando não está em uso) — nunca deve
+/// ser condicionado a `status === "ready"`, porque o srcObject é
+/// atribuído a ele ANTES do status virar "ready". Se o <video> só
+/// existisse condicionalmente, o stream seria atribuído a um elemento
+/// que ainda não existe no DOM, e a tela ficaria preta (bug corrigido
+/// nesta versão).
 export function CameraView({ targetLanguage, onWordSpoken, recentEntries = [] }: CameraViewProps) {
+  const t = useTranslation();
   const { videoRef, status, errorMessage, start, retry } = useCamera();
   const { status: modelStatus, detections } = useObjectDetection(
     videoRef,
@@ -63,97 +58,112 @@ export function CameraView({ targetLanguage, onWordSpoken, recentEntries = [] }:
       ? translations[primaryDetection.class] ?? primaryDetection.class
       : null;
 
-  if (status === "ready") {
-    return (
-      <div style={videoContainerStyle}>
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
-
-        <DetectionOverlay detections={detections} videoRef={videoRef} translations={translations} />
-
-        {modelStatus === "loading" && (
-          <div style={modelLoadingBadgeStyle}>Carregando modelo de detecção...</div>
-        )}
-
-        <button
-          disabled={!primaryTranslatedText}
-          onClick={() => {
-            if (primaryTranslatedText && primaryDetection) {
-              speakText(primaryTranslatedText, targetLanguage);
-              onWordSpoken?.({
-                original: primaryDetection.class,
-                translated: primaryTranslatedText,
-              });
-            }
-          }}
-          style={{
-            ...speakButtonStyle,
-            opacity: primaryTranslatedText ? 1 : 0.4,
-            cursor: primaryTranslatedText ? "pointer" : "default",
-          }}
-          aria-label="Ouvir tradução do objeto apontado"
-        >
-          🔊
-        </button>
-      </div>
-    );
-  }
+  const statusCaption: Record<string, string> = {
+    idle: t("detector.cameraOff"),
+    requesting: t("detector.requesting"),
+    denied: t("detector.denied"),
+    unavailable: t("detector.unavailable"),
+    error: t("detector.error"),
+  };
 
   return (
-    <div style={idlePageStyle}>
-      <h1 style={titleStyle}>Detector de Palavras</h1>
-      <p style={subtitleStyle}>Aponte a câmera para identificar e traduzir palavras</p>
+    <div style={outerStyle}>
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: status === "ready" ? "block" : "none",
+        }}
+      />
 
-      <div style={placeholderBoxStyle}>
-        <div style={placeholderCircleStyle}>
-          <CameraIcon size={30} color="#fff" strokeWidth={2} />
-        </div>
-        <p style={placeholderCaptionStyle}>{STATUS_CAPTION[status]}</p>
-        {status === "error" && errorMessage && <p style={errorDetailStyle}>{errorMessage}</p>}
-      </div>
+      {status === "ready" && (
+        <>
+          <DetectionOverlay detections={detections} videoRef={videoRef} translations={translations} />
 
-      {(status === "idle" || status === "denied") && (
-        <button onClick={status === "denied" ? retry : start} style={startButtonStyle}>
-          <CameraIcon size={18} color="#fff" />
-          {status === "denied" ? "Permitir acesso" : "Abrir Câmera"}
-        </button>
+          {modelStatus === "loading" && (
+            <div style={modelLoadingBadgeStyle}>Carregando modelo de detecção...</div>
+          )}
+
+          <button
+            disabled={!primaryTranslatedText}
+            onClick={() => {
+              if (primaryTranslatedText && primaryDetection) {
+                speakText(primaryTranslatedText, targetLanguage);
+                onWordSpoken?.({
+                  original: primaryDetection.class,
+                  translated: primaryTranslatedText,
+                });
+              }
+            }}
+            style={{
+              ...speakButtonStyle,
+              opacity: primaryTranslatedText ? 1 : 0.4,
+              cursor: primaryTranslatedText ? "pointer" : "default",
+            }}
+            aria-label="Ouvir tradução do objeto apontado"
+          >
+            🔊
+          </button>
+        </>
       )}
 
-      <div style={infoBoxStyle}>
-        <Info size={18} color={ACCENT_COLOR} style={{ flexShrink: 0, marginTop: 2 }} />
-        <div>
-          <p style={infoTitleStyle}>Como usar</p>
-          <ol style={infoListStyle}>
-            <li>Toque em "Abrir Câmera"</li>
-            <li>Aponte para uma palavra ou objeto</li>
-            <li>A tradução aparecerá na tela</li>
-          </ol>
-        </div>
-      </div>
+      {status !== "ready" && (
+        <div style={idlePageStyle}>
+          <h1 style={titleStyle}>{t("detector.title")}</h1>
+          <p style={subtitleStyle}>{t("detector.subtitle")}</p>
 
-      <p style={sectionLabelStyle}>Detecções recentes</p>
-      {recentEntries.length === 0 ? (
-        <p style={emptyRecentStyle}>Nada por aqui ainda — as palavras que você ouvir aparecem aqui.</p>
-      ) : (
-        <div style={recentListStyle}>
-          {recentEntries.map((entry) => (
-            <div key={entry.id} style={recentItemStyle}>
-              <span style={recentTranslatedStyle}>{entry.translated}</span>
-              <span style={recentOriginalStyle}>{entry.original}</span>
+          <div style={placeholderBoxStyle}>
+            <div style={placeholderCircleStyle}>
+              <CameraIcon size={30} color="#fff" strokeWidth={2} />
             </div>
-          ))}
+            <p style={placeholderCaptionStyle}>{statusCaption[status]}</p>
+            {status === "error" && errorMessage && <p style={errorDetailStyle}>{errorMessage}</p>}
+          </div>
+
+          {(status === "idle" || status === "denied") && (
+            <button onClick={status === "denied" ? retry : start} style={startButtonStyle}>
+              <CameraIcon size={18} color="#fff" />
+              {status === "denied" ? t("detector.allowAccess") : t("detector.openCamera")}
+            </button>
+          )}
+
+          <div style={infoBoxStyle}>
+            <Info size={18} color={ACCENT_COLOR} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <p style={infoTitleStyle}>{t("detector.howToUse")}</p>
+              <ol style={infoListStyle}>
+                <li>{t("detector.step1")}</li>
+                <li>{t("detector.step2")}</li>
+                <li>{t("detector.step3")}</li>
+              </ol>
+            </div>
+          </div>
+
+          <p style={sectionLabelStyle}>{t("detector.recent")}</p>
+          {recentEntries.length === 0 ? (
+            <p style={emptyRecentStyle}>{t("detector.recentEmpty")}</p>
+          ) : (
+            <div style={recentListStyle}>
+              {recentEntries.map((entry) => (
+                <div key={entry.id} style={recentItemStyle}>
+                  <span style={recentTranslatedStyle}>{entry.translated}</span>
+                  <span style={recentOriginalStyle}>{entry.original}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-const videoContainerStyle: CSSProperties = {
+const outerStyle: CSSProperties = {
   position: "relative",
   width: "100%",
   height: "100%",
@@ -192,7 +202,8 @@ const speakButtonStyle: CSSProperties = {
 };
 
 const idlePageStyle: CSSProperties = {
-  height: "100%",
+  position: "absolute",
+  inset: 0,
   overflowY: "auto",
   padding: 20,
   paddingBottom: 96,

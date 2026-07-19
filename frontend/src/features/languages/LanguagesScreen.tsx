@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { useLanguageContext } from "../../core/context/LanguageContext";
+import { useTranslation } from "../../core/i18n/useTranslation";
 import {
   ACCENT_COLOR,
   COLOR_BACKGROUND,
@@ -25,11 +26,12 @@ const LANGUAGE_INFO: Record<SupportedLanguage, { code: string; namePt: string; n
 /// global, então a mudança vale para o app inteiro imediatamente.
 export function LanguagesScreen() {
   const { targetLanguage, setTargetLanguage } = useLanguageContext();
+  const t = useTranslation();
 
   return (
     <div style={containerStyle}>
-      <h1 style={titleStyle}>Idiomas</h1>
-      <p style={subtitleStyle}>Selecione seu idioma principal</p>
+      <h1 style={titleStyle}>{t("languages.title")}</h1>
+      <p style={subtitleStyle}>{t("languages.subtitle")}</p>
 
       <div style={listStyle}>
         {SUPPORTED_LANGUAGES.map((lang) => {
@@ -55,7 +57,7 @@ export function LanguagesScreen() {
         })}
       </div>
 
-      <p style={noteStyle}>Novos idiomas podem ser adicionados pelo administrador.</p>
+      <p style={noteStyle}>{t("languages.note")}</p>
     </div>
   );
 }

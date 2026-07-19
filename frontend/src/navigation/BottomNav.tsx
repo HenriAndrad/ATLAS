@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import { NavLink } from "react-router-dom";
 import { Home, BookOpen, Camera, Star, User } from "lucide-react";
+import { useTranslation } from "../core/i18n/useTranslation";
+import type { TranslationKey } from "../core/i18n/translations";
 import {
   ACCENT_COLOR,
   COLOR_BORDER,
@@ -9,33 +11,35 @@ import {
   GRADIENT_PRIMARY,
 } from "../core/constants/appConstants";
 
-const LEFT_TABS = [
-  { to: "/", label: "Início", Icon: Home },
-  { to: "/biblioteca", label: "Biblioteca", Icon: BookOpen },
+const LEFT_TABS: { to: string; labelKey: TranslationKey; Icon: typeof Home }[] = [
+  { to: "/", labelKey: "nav.home", Icon: Home },
+  { to: "/biblioteca", labelKey: "nav.library", Icon: BookOpen },
 ];
 
-const RIGHT_TABS = [
-  { to: "/favoritos", label: "Favoritos", Icon: Star },
-  { to: "/perfil", label: "Perfil", Icon: User },
+const RIGHT_TABS: { to: string; labelKey: TranslationKey; Icon: typeof Home }[] = [
+  { to: "/favoritos", labelKey: "nav.favorites", Icon: Star },
+  { to: "/perfil", labelKey: "nav.profile", Icon: User },
 ];
 
 /// Navegação inferior fixa, com o Detector em destaque como botão
 /// flutuante central — é o recurso principal do app.
 export function BottomNav() {
+  const t = useTranslation();
+
   return (
     <nav style={navStyle}>
       {LEFT_TABS.map((tab) => (
-        <TabLink key={tab.to} {...tab} />
+        <TabLink key={tab.to} to={tab.to} label={t(tab.labelKey)} Icon={tab.Icon} />
       ))}
 
       {/* Espaço reservado sob o botão flutuante */}
       <div style={{ flex: 1 }} />
 
       {RIGHT_TABS.map((tab) => (
-        <TabLink key={tab.to} {...tab} />
+        <TabLink key={tab.to} to={tab.to} label={t(tab.labelKey)} Icon={tab.Icon} />
       ))}
 
-      <NavLink to="/detector" style={centerButtonStyle} aria-label="Detector">
+      <NavLink to="/detector" style={centerButtonStyle} aria-label={t("shortcut.detector")}>
         <Camera size={24} color="#fff" strokeWidth={2.2} />
       </NavLink>
     </nav>

@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { Star, X } from "lucide-react";
 import { useDetectionHistory } from "../detector/useDetectionHistory";
+import { useTranslation } from "../../core/i18n/useTranslation";
 import {
   ACCENT_COLOR,
   COLOR_BACKGROUND,
@@ -28,36 +29,33 @@ type Tab = "palavras" | "conteudos";
 export function FavoritesScreen() {
   const { history, toggleFavorite } = useDetectionHistory();
   const [tab, setTab] = useState<Tab>("palavras");
+  const t = useTranslation();
 
   const favoriteWords = history.filter((entry) => entry.favorite);
 
   return (
     <div style={containerStyle}>
-      <h1 style={titleStyle}>Favoritos</h1>
-      <p style={subtitleStyle}>Palavras e conteúdos salvos</p>
+      <h1 style={titleStyle}>{t("favorites.title")}</h1>
+      <p style={subtitleStyle}>{t("favorites.subtitle")}</p>
 
       <div style={tabsStyle}>
         <button
           onClick={() => setTab("palavras")}
           style={{ ...tabButtonStyle, ...(tab === "palavras" ? tabButtonActiveStyle : {}) }}
         >
-          Palavras ({favoriteWords.length})
+          {t("favorites.words")} ({favoriteWords.length})
         </button>
         <button
           onClick={() => setTab("conteudos")}
           style={{ ...tabButtonStyle, ...(tab === "conteudos" ? tabButtonActiveStyle : {}) }}
         >
-          Conteúdos (0)
+          {t("favorites.contents")} (0)
         </button>
       </div>
 
       {tab === "palavras" && (
         <div style={listStyle}>
-          {favoriteWords.length === 0 && (
-            <p style={emptyStyle}>
-              Nenhuma palavra favoritada ainda — toque no 🤍 no histórico do Detector.
-            </p>
-          )}
+          {favoriteWords.length === 0 && <p style={emptyStyle}>{t("favorites.emptyWords")}</p>}
           {favoriteWords.map((entry) => (
             <div key={entry.id} style={itemStyle}>
               <span style={starBadgeStyle}>
@@ -81,11 +79,7 @@ export function FavoritesScreen() {
         </div>
       )}
 
-      {tab === "conteudos" && (
-        <p style={emptyStyle}>
-          Favoritar conteúdos da Biblioteca ainda não está disponível — próxima etapa.
-        </p>
-      )}
+      {tab === "conteudos" && <p style={emptyStyle}>{t("favorites.emptyContents")}</p>}
     </div>
   );
 }

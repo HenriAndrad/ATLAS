@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, Camera, Search, Star, Globe, Settings, Film, GraduationCap } from "lucide-react";
+import { useTranslation } from "../../core/i18n/useTranslation";
+import type { TranslationKey } from "../../core/i18n/translations";
 import {
   COLOR_BACKGROUND,
   COLOR_BORDER,
@@ -10,44 +12,49 @@ import {
   GRADIENT_PRIMARY,
 } from "../../core/constants/appConstants";
 
-const SHORTCUTS = [
-  { to: "/biblioteca", Icon: BookOpen, label: "Biblioteca", subtitle: "Conteúdos escolares", color: "#3B82F6" },
-  { to: "/detector", Icon: Camera, label: "Detector", subtitle: "Identificar palavras", color: "#10B981" },
-  { to: "/dicionario", Icon: Search, label: "Dicionário", subtitle: "Traduções", color: "#14B8A6" },
-  { to: "/favoritos", Icon: Star, label: "Favoritos", subtitle: "Itens salvos", color: "#F59E0B" },
-  { to: "/idiomas", Icon: Globe, label: "Idiomas", subtitle: "6 idiomas", color: "#8B5CF6" },
-  { to: "/videos", Icon: Film, label: "Vídeos", subtitle: "Aulas e dicas", color: "#EC4899" },
-  { to: "/configuracoes", Icon: Settings, label: "Ajustes", subtitle: "Preferências", color: "#4B5563" },
+const SHORTCUTS: {
+  to: string;
+  Icon: typeof BookOpen;
+  labelKey: TranslationKey;
+  subtitleKey: TranslationKey;
+  color: string;
+}[] = [
+  { to: "/biblioteca", Icon: BookOpen, labelKey: "shortcut.library", subtitleKey: "shortcut.librarySubtitle", color: "#3B82F6" },
+  { to: "/detector", Icon: Camera, labelKey: "shortcut.detector", subtitleKey: "shortcut.detectorSubtitle", color: "#10B981" },
+  { to: "/dicionario", Icon: Search, labelKey: "shortcut.dictionary", subtitleKey: "shortcut.dictionarySubtitle", color: "#14B8A6" },
+  { to: "/favoritos", Icon: Star, labelKey: "shortcut.favorites", subtitleKey: "shortcut.favoritesSubtitle", color: "#F59E0B" },
+  { to: "/idiomas", Icon: Globe, labelKey: "shortcut.languages", subtitleKey: "shortcut.languagesSubtitle", color: "#8B5CF6" },
+  { to: "/videos", Icon: Film, labelKey: "shortcut.videos", subtitleKey: "shortcut.videosSubtitle", color: "#EC4899" },
+  { to: "/configuracoes", Icon: Settings, labelKey: "shortcut.settings", subtitleKey: "shortcut.settingsSubtitle", color: "#4B5563" },
 ];
 
 /// Aba "Início": dashboard de boas-vindas com atalhos para as
 /// principais funcionalidades do app.
 export function HomeScreen() {
+  const t = useTranslation();
+
   return (
     <div style={containerStyle}>
-      <p style={greetingStyle}>Olá!</p>
-      <h1 style={titleStyle}>Bem-vindo ao ATLAS</h1>
+      <p style={greetingStyle}>{t("home.greeting")}</p>
+      <h1 style={titleStyle}>{t("home.title")}</h1>
 
       <div style={bannerStyle}>
         <span style={bannerIconStyle}>
           <GraduationCap size={20} color="#fff" strokeWidth={2.2} />
         </span>
-        <p style={bannerTitleStyle}>Aprenda apontando a câmera</p>
-        <p style={bannerTextStyle}>
-          Com o ATLAS você identifica objetos ao seu redor e aprende o nome deles
-          em outro idioma na hora, com tradução, pronúncia e exemplos de frases.
-        </p>
+        <p style={bannerTitleStyle}>{t("home.bannerTitle")}</p>
+        <p style={bannerTextStyle}>{t("home.bannerText")}</p>
       </div>
 
-      <p style={sectionLabelStyle}>Atalhos</p>
+      <p style={sectionLabelStyle}>{t("home.shortcuts")}</p>
       <div style={gridStyle}>
         {SHORTCUTS.map((shortcut) => (
           <Link key={shortcut.to} to={shortcut.to} style={cardStyle}>
             <span style={{ ...iconBadgeStyle, background: shortcut.color }}>
               <shortcut.Icon size={20} color="#fff" strokeWidth={2.2} />
             </span>
-            <span style={cardLabelStyle}>{shortcut.label}</span>
-            <span style={cardSubtitleStyle}>{shortcut.subtitle}</span>
+            <span style={cardLabelStyle}>{t(shortcut.labelKey)}</span>
+            <span style={cardSubtitleStyle}>{t(shortcut.subtitleKey)}</span>
           </Link>
         ))}
       </div>

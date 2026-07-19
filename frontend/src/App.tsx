@@ -12,6 +12,7 @@ import { DictionaryScreen } from "./features/dictionary/DictionaryScreen";
 import { SettingsScreen } from "./features/settings/SettingsScreen";
 import { BottomNav } from "./navigation/BottomNav";
 import { LanguageProvider } from "./core/context/LanguageContext";
+import { AppSettingsProvider } from "./core/context/AppSettingsContext";
 import { COLOR_BACKGROUND } from "./core/constants/appConstants";
 
 /// Componente raiz do app.
@@ -25,8 +26,9 @@ import { COLOR_BACKGROUND } from "./core/constants/appConstants";
 /// mude o idioma usado em qualquer lugar do app.
 function App() {
   return (
-    <LanguageProvider>
-      <HashRouter>
+    <AppSettingsProvider>
+      <LanguageProvider>
+        <HashRouter>
         <div
           style={{
             height: "100dvh",
@@ -52,8 +54,9 @@ function App() {
           </div>
           <BottomNav />
         </div>
-      </HashRouter>
-    </LanguageProvider>
+        </HashRouter>
+      </LanguageProvider>
+    </AppSettingsProvider>
   );
 }
 
