@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Search as SearchIcon, Volume2 } from "lucide-react";
 import { fetchLibrary } from "../library/libraryApi";
 import type { LibraryCategory } from "../library/types";
+import { fetchDictionaryEntries } from "./dictionaryApi";
 import { useLanguageContext } from "../../core/context/LanguageContext";
 import { useTranslation } from "../../core/i18n/useTranslation";
 import { speakText } from "../tts/speakText";
@@ -14,61 +15,76 @@ import {
   COLOR_TEXT_SECONDARY,
 } from "../../core/constants/appConstants";
 
-interface DictionaryEntry {
-  id: number;
+interface DictionaryRow {
+  id: string;
   emoji: string | null;
   original: string;
   translated: string;
-  categoryName: string;
+  source: string | null;
 }
 
-/// Aba "Dicionário": mostra as palavras cadastradas no banco (o mesmo
-/// da Biblioteca) que já têm tradução para o idioma escolhido pelo
-/// usuário em Idiomas — funciona como uma lista de "palavras mais
-/// comuns" nesse idioma, pesquisável por nome original ou traduzido.
+/// Aba "Dicionário": combina duas fontes de palavras no idioma
+/// escolhido pelo usuário — o banco curado da Biblioteca (com
+/// emoji/categoria) e os documentos que o administrador importou
+/// (palavra**tradução, sem categoria).
 export function DictionaryScreen() {
   const { targetLanguage } = useLanguageContext();
   const t = useTranslation();
 
-  const [categories, setCategories] = useState<LibraryCategory[] | null>(null);
+  const [libraryCategories, setLibraryCategories] = useState<LibraryCategory[] | null>(null);
+  const [importedEntries, setImportedEntries] = useState<
+    Awaited<ReturnType<typeof fetchDictionaryEntries>> | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetchLibrary()
-      .then(setCategories)
+    setLibraryCategories(null);
+    setImportedEntries(null);
+    Promise.all([fetchLibrary(), fetchDictionaryEntries(targetLanguage)])
+      .then(([library, imported]) => {
+        setLibraryCategories(library);
+        setImportedEntries(imported);
+      })
       .catch(() => setError("Não foi possível carregar o dicionário agora."));
-  }, []);
+  }, [targetLanguage]);
 
-  const entries: DictionaryEntry[] = useMemo(() => {
-    if (!categories) return [];
-
-    return categories.flatMap((category) =>
+  const rows: DictionaryRow[] = useMemo(() => {
+    const fromLibrary: DictionaryRow[] = (libraryCategories ?? []).flatMap((category) =>
       category.words
         .map((word) => {
           const translation = word.translations.find((tr) => tr.language_code === targetLanguage);
           if (!translation) return null;
           return {
-            id: word.id,
+            id: `word-${word.id}`,
             emoji: word.emoji,
             original: word.original_en,
             translated: translation.translated_text,
-            categoryName: category.name,
+            source: category.name,
           };
         })
-        .filter((entry): entry is DictionaryEntry => entry !== null),
+        .filter((row): row is DictionaryRow => row !== null),
     );
-  }, [categories, targetLanguage]);
 
-  const filteredEntries = useMemo(() => {
+    const fromImported: DictionaryRow[] = (importedEntries ?? []).map((entry) => ({
+      id: `doc-${entry.id}`,
+      emoji: null,
+      original: entry.original_text,
+      translated: entry.translated_text,
+      source: null,
+    }));
+
+    return [...fromLibrary, ...fromImported];
+  }, [libraryCategories, importedEntries, targetLanguage]);
+
+  const filteredRows = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return entries;
-    return entries.filter(
-      (entry) =>
-        entry.original.toLowerCase().includes(query) ||
-        entry.translated.toLowerCase().includes(query),
+    if (!query) return rows;
+    return rows.filter(
+      (row) =>
+        row.original.toLowerCase().includes(query) || row.translated.toLowerCase().includes(query),
     );
-  }, [entries, search]);
+  }, [rows, search]);
 
   return (
     <div style={containerStyle}>
@@ -86,24 +102,25 @@ export function DictionaryScreen() {
       </div>
 
       {error && <p style={messageStyle}>{error}</p>}
-      {!error && categories === null && <p style={messageStyle}>...</p>}
+      {!error && libraryCategories === null && <p style={messageStyle}>...</p>}
 
-      {categories !== null && filteredEntries.length === 0 && !error && (
+      {libraryCategories !== null && filteredRows.length === 0 && !error && (
         <p style={messageStyle}>{t("dictionary.empty")}</p>
       )}
 
       <div style={listStyle}>
-        {filteredEntries.map((entry) => (
+        {filteredRows.map((row) => (
           <button
-            key={entry.id}
+            key={row.id}
             style={itemStyle}
-            onClick={() => speakText(entry.translated, targetLanguage)}
+            onClick={() => speakText(row.translated, targetLanguage)}
           >
-            <span style={emojiStyle}>{entry.emoji ?? "🔤"}</span>
+            <span style={emojiStyle}>{row.emoji ?? "🔤"}</span>
             <span style={textColumnStyle}>
-              <span style={translatedStyle}>{entry.translated}</span>
+              <span style={translatedStyle}>{row.translated}</span>
               <span style={originalStyle}>
-                {entry.original} • {entry.categoryName}
+                {row.original}
+                {row.source ? ` • ${row.source}` : ""}
               </span>
             </span>
             <Volume2 size={16} color={ACCENT_COLOR} />

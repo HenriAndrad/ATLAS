@@ -85,3 +85,71 @@ export async function deleteAdminWord(id: number): Promise<void> {
   const response = await adminFetch(`/words/${id}`, { method: "DELETE" });
   if (!response.ok) throw new Error("Falha ao excluir palavra.");
 }
+
+// --- Vídeos ---
+
+export interface AdminVideo {
+  id: number;
+  youtube_video_id: string;
+  title: string;
+  thumbnail_url: string | null;
+  category: string;
+  language_code: string;
+}
+
+export async function fetchAdminVideos(): Promise<AdminVideo[]> {
+  const response = await adminFetch("/videos");
+  if (!response.ok) throw new Error("Falha ao carregar vídeos.");
+  return response.json();
+}
+
+export async function createAdminVideo(video: {
+  youtube_url: string;
+  category: string;
+  language_code: string;
+}): Promise<AdminVideo> {
+  const response = await adminFetch("/videos", {
+    method: "POST",
+    body: JSON.stringify(video),
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail ?? "Falha ao adicionar vídeo.");
+  }
+  return response.json();
+}
+
+export async function deleteAdminVideo(id: number): Promise<void> {
+  const response = await adminFetch(`/videos/${id}`, { method: "DELETE" });
+  if (!response.ok) throw new Error("Falha ao excluir vídeo.");
+}
+
+// --- Dicionário (upload de documento) ---
+
+export async function uploadDictionaryDocument(
+  file: File,
+  languageCode: string,
+): Promise<{ count: number }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("language_code", languageCode);
+
+  const authHeader = getAdminAuthHeader();
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/dictionary/upload`, {
+    method: "POST",
+    headers: authHeader ? { Authorization: authHeader } : undefined,
+    body: formData,
+  });
+
+  if (response.status === 401) {
+    clearAdminCredentials();
+  }
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail ?? "Falha ao importar o documento.");
+  }
+
+  const entries = await response.json();
+  return { count: Array.isArray(entries) ? entries.length : 0 };
+}

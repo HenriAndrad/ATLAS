@@ -1,14 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.security import require_admin
 from app.db.session import get_session
 from app.models.category import VocabularyCategory
+from app.models.dictionary_entry import DictionaryEntry
 from app.models.translation import WordTranslation
+from app.models.video import VideoContent
 from app.models.word import VocabularyWord
 from app.schemas.admin import CategoryIn, CategoryOut, WordIn
+from app.schemas.dictionary import DictionaryEntryOut
+from app.schemas.video import VideoCreate, VideoOut
+from app.services.document_parser import DocumentParseError, parse_word_pairs
+from app.services.youtube_service import YoutubeError, extract_video_id, fetch_oembed_info
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)])
 
@@ -102,4 +108,97 @@ async def delete_word(word_id: int, session: AsyncSession = Depends(get_session)
     if word is None:
         raise HTTPException(status_code=404, detail="Palavra não encontrada.")
     await session.delete(word)
+    await session.commit()
+
+
+# ---------------------------------------------------------------------------
+# Vídeos
+# ---------------------------------------------------------------------------
+
+
+@router.get("/videos", response_model=list[VideoOut])
+async def list_admin_videos(session: AsyncSession = Depends(get_session)) -> list[VideoContent]:
+    result = await session.execute(select(VideoContent))
+    return list(result.scalars().all())
+
+
+@router.post("/videos", response_model=VideoOut, status_code=201)
+async def create_video(
+    payload: VideoCreate, session: AsyncSession = Depends(get_session)
+) -> VideoContent:
+    try:
+        video_id = extract_video_id(payload.youtube_url)
+        title, thumbnail_url = await fetch_oembed_info(video_id)
+    except YoutubeError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    video = VideoContent(
+        youtube_video_id=video_id,
+        title=title,
+        thumbnail_url=thumbnail_url,
+        category=payload.category,
+        language_code=payload.language_code.lower(),
+    )
+    session.add(video)
+    await session.commit()
+    await session.refresh(video)
+    return video
+
+
+@router.delete("/videos/{video_id}", status_code=204)
+async def delete_video(video_id: int, session: AsyncSession = Depends(get_session)) -> None:
+    result = await session.execute(select(VideoContent).where(VideoContent.id == video_id))
+    video = result.scalar_one_or_none()
+    if video is None:
+        raise HTTPException(status_code=404, detail="Vídeo não encontrado.")
+    await session.delete(video)
+    await session.commit()
+
+
+# ---------------------------------------------------------------------------
+# Dicionário (upload de documento)
+# ---------------------------------------------------------------------------
+
+
+@router.post("/dictionary/upload", response_model=list[DictionaryEntryOut], status_code=201)
+async def upload_dictionary_document(
+    language_code: str = Form(...),
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+) -> list[DictionaryEntry]:
+    content = await file.read()
+
+    try:
+        pairs = parse_word_pairs(content, file.filename or "")
+    except DocumentParseError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    normalized_language = language_code.lower()
+
+    # Substitui o dicionário existente desse idioma pelo novo envio —
+    # evita duplicar palavras a cada novo upload do mesmo documento.
+    await session.execute(
+        delete(DictionaryEntry).where(DictionaryEntry.language_code == normalized_language)
+    )
+
+    entries = [
+        DictionaryEntry(original_text=original, translated_text=translated, language_code=normalized_language)
+        for original, translated in pairs
+    ]
+    session.add_all(entries)
+    await session.commit()
+
+    for entry in entries:
+        await session.refresh(entry)
+
+    return entries
+
+
+@router.delete("/dictionary/{entry_id}", status_code=204)
+async def delete_dictionary_entry(entry_id: int, session: AsyncSession = Depends(get_session)) -> None:
+    result = await session.execute(select(DictionaryEntry).where(DictionaryEntry.id == entry_id))
+    entry = result.scalar_one_or_none()
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Entrada não encontrada.")
+    await session.delete(entry)
     await session.commit()

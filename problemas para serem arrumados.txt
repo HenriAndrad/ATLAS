@@ -1,1 +1,5 @@
 - O detector so fica em tela preta: Failed to load resource: the server responded with a status of 404 (). Sem erro de Network
+- Esta faltando os conteudos da biblioteca
+- Os ajustes nao estao funcionando as funcionalidades, ele apenas "existe" no front-end
+- ao clicar e selecionar em "idiomas" e escolher o idioma principal, toda a pagina devera ser taduzida para o idioma escolhido.
+- o dicionario esta infuncional, ao clicar nele, nao aparece nenhuma palavra. O certo deve ser olhar o idioma escolhido pelo usuario e colocar as palavras mais utilizadas daquele idioma no dicionario

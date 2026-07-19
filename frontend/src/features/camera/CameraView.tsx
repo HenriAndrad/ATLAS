@@ -7,8 +7,10 @@ import { getPrimaryDetection } from "../detection/getPrimaryDetection";
 import { useTranslatedLabels } from "../translation/useTranslatedLabels";
 import { speakText } from "../tts/speakText";
 import { useTranslation } from "../../core/i18n/useTranslation";
+import { LanguageSelector } from "../settings/LanguageSelector";
 import {
   ACCENT_COLOR,
+  APP_NAME,
   COLOR_BACKGROUND,
   COLOR_BORDER,
   COLOR_SURFACE,
@@ -27,6 +29,7 @@ export interface RecentDetectionEntry {
 
 interface CameraViewProps {
   targetLanguage: SupportedLanguage;
+  onChangeLanguage: (lang: SupportedLanguage) => void;
   onWordSpoken?: (entry: { original: string; translated: string }) => void;
   recentEntries?: RecentDetectionEntry[];
 }
@@ -38,7 +41,7 @@ interface CameraViewProps {
 /// existisse condicionalmente, o stream seria atribuído a um elemento
 /// que ainda não existe no DOM, e a tela ficaria preta (bug corrigido
 /// nesta versão).
-export function CameraView({ targetLanguage, onWordSpoken, recentEntries = [] }: CameraViewProps) {
+export function CameraView({ targetLanguage, onChangeLanguage, onWordSpoken, recentEntries = [] }: CameraViewProps) {
   const t = useTranslation();
   const { videoRef, status, errorMessage, start, retry } = useCamera();
   const { status: modelStatus, detections } = useObjectDetection(
@@ -83,10 +86,15 @@ export function CameraView({ targetLanguage, onWordSpoken, recentEntries = [] }:
 
       {status === "ready" && (
         <>
+          <div style={topBarStyle}>
+            <span style={appNameStyle}>{APP_NAME}</span>
+            <LanguageSelector selected={targetLanguage} onSelect={onChangeLanguage} />
+          </div>
+
           <DetectionOverlay detections={detections} videoRef={videoRef} translations={translations} />
 
           {modelStatus === "loading" && (
-            <div style={modelLoadingBadgeStyle}>Carregando modelo de detecção...</div>
+            <div style={{ ...modelLoadingBadgeStyle, top: 74 }}>Carregando modelo de detecção...</div>
           )}
 
           <button
@@ -114,6 +122,11 @@ export function CameraView({ targetLanguage, onWordSpoken, recentEntries = [] }:
 
       {status !== "ready" && (
         <div style={idlePageStyle}>
+          <div style={idleTopBarStyle}>
+            <span style={idleAppNameStyle}>{APP_NAME}</span>
+            <LanguageSelector selected={targetLanguage} onSelect={onChangeLanguage} />
+          </div>
+
           <h1 style={titleStyle}>{t("detector.title")}</h1>
           <p style={subtitleStyle}>{t("detector.subtitle")}</p>
 
@@ -162,6 +175,42 @@ export function CameraView({ targetLanguage, onWordSpoken, recentEntries = [] }:
     </div>
   );
 }
+
+const topBarStyle: CSSProperties = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "16px 16px 44px",
+  background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0))",
+  zIndex: 2,
+};
+
+const appNameStyle: CSSProperties = {
+  color: "#fff",
+  fontFamily: "system-ui, sans-serif",
+  fontSize: 15,
+  fontWeight: 700,
+  letterSpacing: 0.2,
+};
+
+const idleTopBarStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 16,
+};
+
+const idleAppNameStyle: CSSProperties = {
+  color: COLOR_TEXT_PRIMARY,
+  fontFamily: "system-ui, sans-serif",
+  fontSize: 16,
+  fontWeight: 800,
+  letterSpacing: 0.3,
+};
 
 const outerStyle: CSSProperties = {
   position: "relative",

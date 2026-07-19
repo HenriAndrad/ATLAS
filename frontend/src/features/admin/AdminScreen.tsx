@@ -7,21 +7,37 @@ import {
 import {
   createAdminCategory,
   createAdminWord,
+  createAdminVideo,
+  deleteAdminVideo,
   deleteAdminWord,
   fetchAdminCategories,
+  fetchAdminVideos,
   updateAdminWord,
+  uploadDictionaryDocument,
   verifyAdminCredentials,
   type AdminCategory,
+  type AdminVideo,
 } from "./adminApi";
 import { fetchLibrary } from "../library/libraryApi";
 import type { LibraryCategory } from "../library/types";
-import { ACCENT_COLOR, COLOR_BACKGROUND, COLOR_BORDER, COLOR_SURFACE, COLOR_TEXT_PRIMARY, COLOR_TEXT_SECONDARY, GRADIENT_PRIMARY, SUPPORTED_LANGUAGES } from "../../core/constants/appConstants";
+import {
+  ACCENT_COLOR,
+  COLOR_BACKGROUND,
+  COLOR_BORDER,
+  COLOR_SURFACE,
+  COLOR_TEXT_PRIMARY,
+  COLOR_TEXT_SECONDARY,
+  GRADIENT_PRIMARY,
+  SUPPORTED_LANGUAGES,
+} from "../../core/constants/appConstants";
 
 const TRANSLATABLE_LANGUAGES = SUPPORTED_LANGUAGES.filter((lang) => lang !== "en");
 
-/// Área do administrador: login com usuário/senha e um painel simples
-/// para adicionar ou remover palavras do banco, sem precisar mexer em
-/// código ou rodar scripts.
+type AdminTab = "palavras" | "videos" | "dicionario";
+
+/// Área do administrador: login com usuário/senha e um painel com três
+/// abas — palavras da Biblioteca, vídeos do YouTube e importação de
+/// documentos pro Dicionário — sem precisar mexer em código.
 export function AdminScreen() {
   const [isLoggedIn, setIsLoggedIn] = useState(isAdminLoggedIn());
 
@@ -89,6 +105,64 @@ function AdminLogin({ onLoggedIn }: { onLoggedIn: () => void }) {
 }
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
+  const [tab, setTab] = useState<AdminTab>("palavras");
+
+  return (
+    <div style={dashboardContainerStyle}>
+      <div style={headerRowStyle}>
+        <h1 style={titleStyle}>Administrador</h1>
+        <button onClick={onLogout} style={logoutButtonStyle}>
+          Sair
+        </button>
+      </div>
+
+      <div style={tabsRowStyle}>
+        <TabButton active={tab === "palavras"} onClick={() => setTab("palavras")}>
+          Palavras
+        </TabButton>
+        <TabButton active={tab === "videos"} onClick={() => setTab("videos")}>
+          Vídeos
+        </TabButton>
+        <TabButton active={tab === "dicionario"} onClick={() => setTab("dicionario")}>
+          Dicionário
+        </TabButton>
+      </div>
+
+      {tab === "palavras" && <WordsPanel />}
+      {tab === "videos" && <VideosPanel />}
+      {tab === "dicionario" && <DictionaryPanel />}
+    </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        ...tabButtonStyle,
+        background: active ? ACCENT_COLOR : COLOR_SURFACE,
+        color: active ? "#fff" : COLOR_TEXT_PRIMARY,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Palavras
+// ---------------------------------------------------------------------------
+
+function WordsPanel() {
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [words, setWords] = useState<LibraryCategory[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -195,14 +269,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   return (
-    <div style={dashboardContainerStyle}>
-      <div style={headerRowStyle}>
-        <h1 style={titleStyle}>Administrador</h1>
-        <button onClick={onLogout} style={logoutButtonStyle}>
-          Sair
-        </button>
-      </div>
-
+    <>
       <form onSubmit={handleAddWord} style={formStyle}>
         <h2 style={sectionTitleStyle}>{editingWordId !== null ? "Editar palavra" : "Nova palavra"}</h2>
 
@@ -296,7 +363,183 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           ))}
         </div>
       ))}
-    </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Vídeos
+// ---------------------------------------------------------------------------
+
+function VideosPanel() {
+  const [videos, setVideos] = useState<AdminVideo[]>([]);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [category, setCategory] = useState("");
+  const [languageCode, setLanguageCode] = useState<string>(SUPPORTED_LANGUAGES[0]);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function loadVideos() {
+    setVideos(await fetchAdminVideos());
+  }
+
+  useEffect(() => {
+    loadVideos().catch(() => setStatusMessage("Falha ao carregar vídeos."));
+  }, []);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setStatusMessage(null);
+    setIsSubmitting(true);
+
+    try {
+      await createAdminVideo({ youtube_url: youtubeUrl.trim(), category: category.trim(), language_code: languageCode });
+      setStatusMessage("Vídeo adicionado com sucesso.");
+      setYoutubeUrl("");
+      setCategory("");
+      await loadVideos();
+    } catch (err) {
+      setStatusMessage(err instanceof Error ? err.message : "Falha ao adicionar vídeo.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleDelete(id: number) {
+    try {
+      await deleteAdminVideo(id);
+      await loadVideos();
+    } catch {
+      setStatusMessage("Falha ao excluir vídeo.");
+    }
+  }
+
+  return (
+    <>
+      <form onSubmit={handleSubmit} style={formStyle}>
+        <h2 style={sectionTitleStyle}>Novo vídeo</h2>
+        <p style={helpTextStyle}>
+          Cole só o link do YouTube — título e miniatura são buscados automaticamente. O aluno
+          nunca vê o link, só o vídeo já embutido no app.
+        </p>
+
+        <input
+          placeholder="https://www.youtube.com/watch?v=..."
+          value={youtubeUrl}
+          onChange={(e) => setYoutubeUrl(e.target.value)}
+          style={inputStyle}
+          required
+        />
+        <input
+          placeholder="Categoria (ex: Aulas de gramática)"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          style={inputStyle}
+          required
+        />
+        <select
+          value={languageCode}
+          onChange={(e) => setLanguageCode(e.target.value)}
+          style={inputStyle}
+        >
+          {SUPPORTED_LANGUAGES.map((lang) => (
+            <option key={lang} value={lang}>
+              {lang.toUpperCase()}
+            </option>
+          ))}
+        </select>
+
+        {statusMessage && <p style={statusStyle}>{statusMessage}</p>}
+
+        <button type="submit" disabled={isSubmitting} style={primaryButtonStyle}>
+          {isSubmitting ? "Adicionando..." : "Adicionar vídeo"}
+        </button>
+      </form>
+
+      <h2 style={sectionTitleStyle}>Vídeos cadastrados</h2>
+      {videos.length === 0 && <p style={statusStyle}>Nenhum vídeo cadastrado ainda.</p>}
+      {videos.map((video) => (
+        <div key={video.id} style={wordRowStyle}>
+          <span>
+            {video.title} — {video.category} ({video.language_code.toUpperCase()})
+          </span>
+          <button onClick={() => handleDelete(video.id)} style={deleteButtonStyle}>
+            Excluir
+          </button>
+        </div>
+      ))}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Dicionário (upload de documento)
+// ---------------------------------------------------------------------------
+
+function DictionaryPanel() {
+  const [file, setFile] = useState<File | null>(null);
+  const [languageCode, setLanguageCode] = useState<string>(SUPPORTED_LANGUAGES[0]);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setStatusMessage(null);
+
+    if (!file) {
+      setStatusMessage("Escolha um arquivo .txt ou .docx.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { count } = await uploadDictionaryDocument(file, languageCode);
+      setStatusMessage(
+        `${count} palavra(s) importada(s) para ${languageCode.toUpperCase()}. Isso substituiu o dicionário anterior desse idioma.`,
+      );
+      setFile(null);
+    } catch (err) {
+      setStatusMessage(err instanceof Error ? err.message : "Falha ao importar o documento.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} style={formStyle}>
+      <h2 style={sectionTitleStyle}>Importar dicionário</h2>
+      <p style={helpTextStyle}>
+        Envie um arquivo .txt ou .docx com uma palavra por linha, no formato{" "}
+        <strong>palavra**tradução</strong> (ex: <code>cat**gato</code>). O app separa
+        automaticamente pelo <code>**</code>. Cada envio substitui o dicionário anterior daquele
+        idioma.
+      </p>
+
+      <select
+        value={languageCode}
+        onChange={(e) => setLanguageCode(e.target.value)}
+        style={inputStyle}
+      >
+        {SUPPORTED_LANGUAGES.map((lang) => (
+          <option key={lang} value={lang}>
+            {lang.toUpperCase()}
+          </option>
+        ))}
+      </select>
+
+      <input
+        type="file"
+        accept=".txt,.docx"
+        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+        style={inputStyle}
+      />
+
+      {statusMessage && <p style={statusStyle}>{statusMessage}</p>}
+
+      <button type="submit" disabled={isSubmitting} style={primaryButtonStyle}>
+        {isSubmitting ? "Importando..." : "Importar documento"}
+      </button>
+    </form>
   );
 }
 
@@ -328,8 +571,21 @@ const headerRowStyle: CSSProperties = {
   justifyContent: "space-between",
 };
 
+const tabsRowStyle: CSSProperties = { display: "flex", gap: 8, marginBottom: 20 };
+
+const tabButtonStyle: CSSProperties = {
+  padding: "8px 14px",
+  borderRadius: 10,
+  border: "none",
+  fontSize: 13,
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
 const titleStyle: CSSProperties = { fontSize: 22, fontWeight: 700, margin: "0 0 16px" };
 const sectionTitleStyle: CSSProperties = { fontSize: 15, fontWeight: 700, margin: "16px 0 8px" };
+
+const helpTextStyle: CSSProperties = { fontSize: 12, color: COLOR_TEXT_SECONDARY, margin: 0, lineHeight: 1.5 };
 
 const formStyle: CSSProperties = {
   display: "flex",

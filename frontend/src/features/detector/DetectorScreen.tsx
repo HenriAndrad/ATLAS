@@ -7,7 +7,7 @@ import { useLanguageContext } from "../../core/context/LanguageContext";
 /// Aba "Detector": aponta a câmera para um objeto e vê a tradução em
 /// tempo real, com histórico de palavras ouvidas e favoritos.
 export function DetectorScreen() {
-  const { targetLanguage } = useLanguageContext();
+  const { targetLanguage, setTargetLanguage } = useLanguageContext();
   const { history, addEntry, toggleFavorite } = useDetectionHistory();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
@@ -15,6 +15,7 @@ export function DetectorScreen() {
     <div style={{ position: "relative", height: "100%" }}>
       <CameraView
         targetLanguage={targetLanguage}
+        onChangeLanguage={setTargetLanguage}
         onWordSpoken={(entry) => addEntry(entry.original, entry.translated, targetLanguage)}
         recentEntries={history.slice(0, 3)}
       />
