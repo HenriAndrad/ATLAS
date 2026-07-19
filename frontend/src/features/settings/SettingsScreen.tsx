@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { Globe, Sun, Type, Bell, Volume2, Accessibility, ChevronRight } from "lucide-react";
 import { useLanguageContext } from "../../core/context/LanguageContext";
 import { useAppSettings, type FontSize } from "./useAppSettings";
 import {
@@ -37,15 +38,18 @@ export function SettingsScreen() {
 
       <Section label="Idioma">
         <Link to="/idiomas" style={rowLinkStyle}>
-          <span style={{ ...iconBadgeStyle, background: "#DBEAFE" }}>🌐</span>
+          <span style={{ ...iconBadgeStyle, background: "#DBEAFE" }}>
+            <Globe size={16} color="#3B82F6" />
+          </span>
           <span style={rowTextStyle}>{LANGUAGE_NAMES[targetLanguage]}</span>
-          <span style={chevronStyle}>›</span>
+          <ChevronRight size={18} color={COLOR_TEXT_SECONDARY} />
         </Link>
       </Section>
 
       <Section label="Tema">
         <Row
-          icon="☀️"
+          Icon={Sun}
+          iconColor="#D97706"
           iconBg="#FEF3C7"
           label="Modo Claro"
           checked={settings.theme === "light"}
@@ -56,7 +60,9 @@ export function SettingsScreen() {
       <Section label="Tamanho da fonte">
         <div style={fontSizeCardStyle}>
           <div style={fontSizeHeaderStyle}>
-            <span style={{ ...iconBadgeStyle, background: "#D1FAE5" }}>🔤</span>
+            <span style={{ ...iconBadgeStyle, background: "#D1FAE5" }}>
+              <Type size={16} color="#059669" />
+            </span>
             <span style={rowTextStyle}>Tamanho do texto</span>
           </div>
           <div style={fontSizeOptionsStyle}>
@@ -80,14 +86,16 @@ export function SettingsScreen() {
 
       <Section label="Notificações">
         <Row
-          icon="🔔"
+          Icon={Bell}
+          iconColor="#6B7280"
           iconBg="#F3F4F6"
           label="Lembretes diários"
           checked={settings.dailyReminders}
           onChange={(checked) => updateSetting("dailyReminders", checked)}
         />
         <Row
-          icon="🔊"
+          Icon={Volume2}
+          iconColor="#6B7280"
           iconBg="#F3F4F6"
           label="Sons"
           checked={settings.soundEnabled}
@@ -97,7 +105,8 @@ export function SettingsScreen() {
 
       <Section label="Acessibilidade">
         <Row
-          icon="♿"
+          Icon={Accessibility}
+          iconColor="#6B7280"
           iconBg="#F3F4F6"
           label="Alto contraste"
           checked={settings.highContrast}
@@ -118,13 +127,15 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function Row({
-  icon,
+  Icon,
+  iconColor,
   iconBg,
   label,
   checked,
   onChange,
 }: {
-  icon: string;
+  Icon: typeof Sun;
+  iconColor: string;
   iconBg: string;
   label: string;
   checked: boolean;
@@ -132,7 +143,9 @@ function Row({
 }) {
   return (
     <div style={rowStyle}>
-      <span style={{ ...iconBadgeStyle, background: iconBg }}>{icon}</span>
+      <span style={{ ...iconBadgeStyle, background: iconBg }}>
+        <Icon size={16} color={iconColor} />
+      </span>
       <span style={rowTextStyle}>{label}</span>
       <button
         onClick={() => onChange(!checked)}
@@ -199,7 +212,6 @@ const iconBadgeStyle: CSSProperties = {
 };
 
 const rowTextStyle: CSSProperties = { flex: 1, color: COLOR_TEXT_PRIMARY, fontSize: 14, fontWeight: 600 };
-const chevronStyle: CSSProperties = { color: COLOR_TEXT_SECONDARY, fontSize: 18 };
 
 const toggleTrackStyle: CSSProperties = {
   position: "relative",

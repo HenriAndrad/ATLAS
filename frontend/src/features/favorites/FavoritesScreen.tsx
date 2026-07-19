@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from "react";
+import { Star, X } from "lucide-react";
 import { useDetectionHistory } from "../detector/useDetectionHistory";
 import {
   ACCENT_COLOR,
@@ -59,7 +60,9 @@ export function FavoritesScreen() {
           )}
           {favoriteWords.map((entry) => (
             <div key={entry.id} style={itemStyle}>
-              <span style={starBadgeStyle}>⭐</span>
+              <span style={starBadgeStyle}>
+                <Star size={16} color="#D97706" fill="#D97706" />
+              </span>
               <span style={itemTextStyle}>
                 <span style={itemTitleStyle}>{entry.translated}</span>
                 <span style={itemSubtitleStyle}>
@@ -71,7 +74,7 @@ export function FavoritesScreen() {
                 style={removeButtonStyle}
                 aria-label="Remover dos favoritos"
               >
-                ✕
+                <X size={16} />
               </button>
             </div>
           ))}

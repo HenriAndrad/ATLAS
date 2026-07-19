@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from "react";
 import type { HistoryEntry } from "./useDetectionHistory";
-import { ACCENT_COLOR } from "../../core/constants/appConstants";
+import { ACCENT_COLOR, COLOR_BACKGROUND, COLOR_SURFACE, COLOR_TEXT_PRIMARY, COLOR_TEXT_SECONDARY } from "../../core/constants/appConstants";
 
 interface HistoryPanelProps {
   entries: HistoryEntry[];
@@ -26,7 +26,8 @@ export function HistoryPanel({ entries, onToggleFavorite, onClose }: HistoryPane
           onClick={() => setShowFavoritesOnly((v) => !v)}
           style={{
             ...filterButtonStyle,
-            background: showFavoritesOnly ? ACCENT_COLOR : "rgba(255, 255, 255, 0.1)",
+            background: showFavoritesOnly ? ACCENT_COLOR : COLOR_BACKGROUND,
+            color: showFavoritesOnly ? "#fff" : COLOR_TEXT_PRIMARY,
           }}
         >
           {showFavoritesOnly ? "★ Só favoritos" : "☆ Só favoritos"}
@@ -74,7 +75,7 @@ const overlayStyle: CSSProperties = {
 const panelStyle: CSSProperties = {
   width: "100%",
   maxHeight: "70%",
-  background: "#111",
+  background: COLOR_SURFACE,
   borderTopLeftRadius: 20,
   borderTopRightRadius: 20,
   padding: 20,
@@ -91,12 +92,12 @@ const headerStyle: CSSProperties = {
   justifyContent: "space-between",
 };
 
-const titleStyle: CSSProperties = { color: "#fff", fontSize: 18, fontWeight: 700, margin: 0 };
+const titleStyle: CSSProperties = { color: COLOR_TEXT_PRIMARY, fontSize: 18, fontWeight: 700, margin: 0 };
 
 const closeButtonStyle: CSSProperties = {
   border: "none",
-  background: "rgba(255, 255, 255, 0.1)",
-  color: "#fff",
+  background: COLOR_BACKGROUND,
+  color: COLOR_TEXT_PRIMARY,
   width: 32,
   height: 32,
   borderRadius: "50%",
@@ -110,12 +111,12 @@ const filterButtonStyle: CSSProperties = {
   borderRadius: 16,
   padding: "6px 14px",
   fontSize: 12,
-  color: "#fff",
+  color: COLOR_TEXT_PRIMARY,
   cursor: "pointer",
 };
 
 const emptyStyle: CSSProperties = {
-  color: "rgba(255, 255, 255, 0.5)",
+  color: COLOR_TEXT_SECONDARY,
   fontSize: 13,
   textAlign: "center",
   padding: "24px 0",
@@ -136,11 +137,11 @@ const itemStyle: CSSProperties = {
   alignItems: "center",
   justifyContent: "space-between",
   padding: "10px 4px",
-  borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+  borderBottom: "1px solid #F3F4F6",
 };
 
-const translatedTextStyle: CSSProperties = { color: "#fff", fontSize: 14, fontWeight: 600 };
-const originalTextStyle: CSSProperties = { color: "rgba(255, 255, 255, 0.5)", fontSize: 12 };
+const translatedTextStyle: CSSProperties = { color: COLOR_TEXT_PRIMARY, fontSize: 14, fontWeight: 600 };
+const originalTextStyle: CSSProperties = { color: COLOR_TEXT_SECONDARY, fontSize: 12 };
 
 const heartButtonStyle: CSSProperties = {
   border: "none",

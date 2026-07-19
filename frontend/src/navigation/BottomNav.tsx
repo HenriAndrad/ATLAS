@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { NavLink } from "react-router-dom";
+import { Home, BookOpen, Camera, Star, User } from "lucide-react";
 import {
   ACCENT_COLOR,
   COLOR_BORDER,
@@ -9,13 +10,13 @@ import {
 } from "../core/constants/appConstants";
 
 const LEFT_TABS = [
-  { to: "/", label: "Início", icon: "🏠" },
-  { to: "/biblioteca", label: "Biblioteca", icon: "📖" },
+  { to: "/", label: "Início", Icon: Home },
+  { to: "/biblioteca", label: "Biblioteca", Icon: BookOpen },
 ];
 
 const RIGHT_TABS = [
-  { to: "/favoritos", label: "Favoritos", icon: "⭐" },
-  { to: "/perfil", label: "Perfil", icon: "👤" },
+  { to: "/favoritos", label: "Favoritos", Icon: Star },
+  { to: "/perfil", label: "Perfil", Icon: User },
 ];
 
 /// Navegação inferior fixa, com o Detector em destaque como botão
@@ -35,15 +36,24 @@ export function BottomNav() {
       ))}
 
       <NavLink to="/detector" style={centerButtonStyle} aria-label="Detector">
-        📷
+        <Camera size={24} color="#fff" strokeWidth={2.2} />
       </NavLink>
     </nav>
   );
 }
 
-function TabLink({ to, label, icon }: { to: string; label: string; icon: string }) {
+function TabLink({
+  to,
+  label,
+  Icon,
+}: {
+  to: string;
+  label: string;
+  Icon: typeof Home;
+}) {
   return (
     <NavLink
+      key={to}
       to={to}
       end={to === "/"}
       style={({ isActive }) => ({
@@ -51,7 +61,7 @@ function TabLink({ to, label, icon }: { to: string; label: string; icon: string 
         color: isActive ? ACCENT_COLOR : COLOR_TEXT_SECONDARY,
       })}
     >
-      <span style={iconStyle}>{icon}</span>
+      <Icon size={20} strokeWidth={2.2} />
       <span style={labelStyle}>{label}</span>
     </NavLink>
   );
@@ -73,12 +83,11 @@ const tabStyle: CSSProperties = {
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  gap: 2,
+  gap: 3,
   textDecoration: "none",
   fontFamily: "system-ui, sans-serif",
 };
 
-const iconStyle: CSSProperties = { fontSize: 20 };
 const labelStyle: CSSProperties = { fontSize: 10, fontWeight: 600 };
 
 const centerButtonStyle: CSSProperties = {
@@ -93,7 +102,6 @@ const centerButtonStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: 24,
   boxShadow: "0 8px 20px rgba(16, 185, 129, 0.35)",
   border: `4px solid ${COLOR_SURFACE}`,
   textDecoration: "none",
