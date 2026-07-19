@@ -52,7 +52,7 @@ export function DictionaryScreen() {
   const rows: DictionaryRow[] = useMemo(() => {
     const fromLibrary: DictionaryRow[] = (libraryCategories ?? []).flatMap((category) =>
       category.words
-        .map((word) => {
+        .map((word): DictionaryRow | null => {
           const translation = word.translations.find((tr) => tr.language_code === targetLanguage);
           if (!translation) return null;
           return {
