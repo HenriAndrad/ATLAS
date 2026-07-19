@@ -7,7 +7,7 @@ import { useTranslatedLabels } from "../translation/useTranslatedLabels";
 import { LanguageSelector } from "../settings/LanguageSelector";
 import { SpeakButton } from "../tts/SpeakButton";
 import { speakText } from "../tts/speakText";
-import { APP_NAME, type SupportedLanguage } from "../../core/constants/appConstants";
+import { APP_NAME, GRADIENT_PRIMARY, MIN_CONFIDENT_LABEL_SCORE, type SupportedLanguage } from "../../core/constants/appConstants";
 
 interface CameraViewProps {
   targetLanguage: SupportedLanguage;
@@ -36,9 +36,12 @@ export function CameraView({ targetLanguage, onChangeLanguage, onWordSpoken }: C
   );
 
   const primaryDetection = getPrimaryDetection(detections, videoRef.current);
-  const primaryTranslatedText = primaryDetection
-    ? translations[primaryDetection.class] ?? primaryDetection.class
-    : null;
+  const isPrimaryConfident =
+    primaryDetection !== null && primaryDetection.score >= MIN_CONFIDENT_LABEL_SCORE;
+  const primaryTranslatedText =
+    primaryDetection && isPrimaryConfident
+      ? translations[primaryDetection.class] ?? primaryDetection.class
+      : null;
 
   return (
     <div
@@ -180,7 +183,8 @@ const startButtonStyle: CSSProperties = {
   padding: "16px 32px",
   borderRadius: 28,
   border: "none",
-  background: "#3B82F6",
+  background: GRADIENT_PRIMARY,
+  boxShadow: "0 8px 20px rgba(16, 185, 129, 0.25)",
   color: "#fff",
   fontSize: 16,
   fontWeight: 700,

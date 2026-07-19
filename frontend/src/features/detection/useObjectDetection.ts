@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import "@tensorflow/tfjs";
+import { MIN_DETECTION_SCORE } from "../../core/constants/appConstants";
 
 export interface DetectedObject {
   /** Nome da classe detectada, em inglês (vocabulário do modelo COCO). */
@@ -64,11 +65,13 @@ export function useObjectDetection(
         const predictions = await model.detect(video);
         if (active) {
           setDetections(
-            predictions.map((p) => ({
-              class: p.class,
-              score: p.score,
-              bbox: p.bbox as [number, number, number, number],
-            })),
+            predictions
+              .filter((p) => p.score >= MIN_DETECTION_SCORE)
+              .map((p) => ({
+                class: p.class,
+                score: p.score,
+                bbox: p.bbox as [number, number, number, number],
+              })),
           );
         }
       }

@@ -7,6 +7,8 @@ import { translateText } from "./translationApi";
 // rótulo/idioma. Reseta apenas quando a página recarrega.
 const translationCache = new Map<string, string>();
 
+const UNAVAILABLE_LABEL = "⚠ tradução indisponível";
+
 /// Recebe os rótulos (em inglês) atualmente detectados na tela e retorna
 /// um mapa { rótulo original -> tradução }, buscando no backend apenas
 /// os rótulos ainda não traduzidos para o idioma de destino.
@@ -43,8 +45,12 @@ export function useTranslatedLabels(
           setTranslations((prev) => ({ ...prev, [label]: translated }));
         })
         .catch(() => {
-          // Falha na tradução (ex: chave DeepL ausente/inválida): mantemos
-          // o rótulo original como fallback silencioso na tela.
+          // Falha na tradução (ex: idioma não suportado pelo provedor para
+          // texto em tempo real): mostramos isso explicitamente em vez de
+          // deixar o aluno achando que "não traduziu" sem motivo aparente.
+          // Também guardamos em cache pra não tentar de novo a cada frame.
+          translationCache.set(cacheKey, UNAVAILABLE_LABEL);
+          setTranslations((prev) => ({ ...prev, [label]: UNAVAILABLE_LABEL }));
         })
         .finally(() => {
           pendingRef.current.delete(cacheKey);

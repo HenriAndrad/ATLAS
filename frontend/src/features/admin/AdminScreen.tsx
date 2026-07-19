@@ -9,12 +9,13 @@ import {
   createAdminWord,
   deleteAdminWord,
   fetchAdminCategories,
+  updateAdminWord,
   verifyAdminCredentials,
   type AdminCategory,
 } from "./adminApi";
 import { fetchLibrary } from "../library/libraryApi";
 import type { LibraryCategory } from "../library/types";
-import { ACCENT_COLOR, SUPPORTED_LANGUAGES } from "../../core/constants/appConstants";
+import { ACCENT_COLOR, GRADIENT_PRIMARY, SUPPORTED_LANGUAGES } from "../../core/constants/appConstants";
 
 const TRANSLATABLE_LANGUAGES = SUPPORTED_LANGUAGES.filter((lang) => lang !== "en");
 
@@ -98,6 +99,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [emoji, setEmoji] = useState("");
   const [exampleSentenceEn, setExampleSentenceEn] = useState("");
   const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [editingWordId, setEditingWordId] = useState<number | null>(null);
 
   async function loadData() {
     const [categoriesData, libraryData] = await Promise.all([
@@ -111,6 +113,29 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   useEffect(() => {
     loadData().catch(() => setStatusMessage("Falha ao carregar dados."));
   }, []);
+
+  function handleStartEdit(categoryIdForWord: number, word: LibraryCategory["words"][number]) {
+    setEditingWordId(word.id);
+    setCategoryId(categoryIdForWord);
+    setOriginalEn(word.original_en);
+    setEmoji(word.emoji ?? "");
+    setExampleSentenceEn(word.example_sentence_en ?? "");
+    const translationMap: Record<string, string> = {};
+    word.translations.forEach((t) => {
+      translationMap[t.language_code] = t.translated_text;
+    });
+    setTranslations(translationMap);
+    setStatusMessage(null);
+  }
+
+  function handleCancelEdit() {
+    setEditingWordId(null);
+    setCategoryId("new");
+    setOriginalEn("");
+    setEmoji("");
+    setExampleSentenceEn("");
+    setTranslations({});
+  }
 
   async function handleAddWord(event: FormEvent) {
     event.preventDefault();
@@ -128,7 +153,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         finalCategoryId = created.id;
       }
 
-      await createAdminWord({
+      const wordPayload = {
         category_id: finalCategoryId,
         original_en: originalEn.trim(),
         emoji: emoji.trim(),
@@ -137,9 +162,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         translations: TRANSLATABLE_LANGUAGES.filter((lang) => translations[lang]?.trim()).map(
           (lang) => ({ language_code: lang, translated_text: translations[lang].trim() }),
         ),
-      });
+      };
 
-      setStatusMessage("Palavra adicionada com sucesso.");
+      if (editingWordId !== null) {
+        await updateAdminWord(editingWordId, wordPayload);
+        setStatusMessage("Palavra atualizada com sucesso.");
+      } else {
+        await createAdminWord(wordPayload);
+        setStatusMessage("Palavra adicionada com sucesso.");
+      }
+
+      setEditingWordId(null);
       setOriginalEn("");
       setEmoji("");
       setExampleSentenceEn("");
@@ -148,7 +181,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setCategoryId("new");
       await loadData();
     } catch {
-      setStatusMessage("Falha ao adicionar a palavra.");
+      setStatusMessage("Falha ao salvar a palavra.");
     }
   }
 
@@ -171,7 +204,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       </div>
 
       <form onSubmit={handleAddWord} style={formStyle}>
-        <h2 style={sectionTitleStyle}>Nova palavra</h2>
+        <h2 style={sectionTitleStyle}>{editingWordId !== null ? "Editar palavra" : "Nova palavra"}</h2>
 
         <select
           value={categoryId}
@@ -231,8 +264,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {statusMessage && <p style={statusStyle}>{statusMessage}</p>}
 
         <button type="submit" style={primaryButtonStyle}>
-          Adicionar palavra
+          {editingWordId !== null ? "Salvar alterações" : "Adicionar palavra"}
         </button>
+        {editingWordId !== null && (
+          <button type="button" onClick={handleCancelEdit} style={logoutButtonStyle}>
+            Cancelar edição
+          </button>
+        )}
       </form>
 
       <h2 style={sectionTitleStyle}>Palavras cadastradas</h2>
@@ -246,9 +284,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <span>
                 {word.emoji} {word.original_en} ({word.translations.length} traduções)
               </span>
-              <button onClick={() => handleDelete(word.id)} style={deleteButtonStyle}>
-                Excluir
-              </button>
+              <span style={wordActionsStyle}>
+                <button onClick={() => handleStartEdit(category.id, word)} style={editButtonStyle}>
+                  Editar
+                </button>
+                <button onClick={() => handleDelete(word.id)} style={deleteButtonStyle}>
+                  Excluir
+                </button>
+              </span>
             </div>
           ))}
         </div>
@@ -307,9 +350,9 @@ const inputStyle: CSSProperties = {
 
 const primaryButtonStyle: CSSProperties = {
   padding: "12px 20px",
-  borderRadius: 8,
+  borderRadius: 10,
   border: "none",
-  background: ACCENT_COLOR,
+  background: GRADIENT_PRIMARY,
   color: "#fff",
   fontWeight: 700,
   fontSize: 14,
@@ -349,4 +392,20 @@ const deleteButtonStyle: CSSProperties = {
   padding: "4px 10px",
   fontSize: 12,
   cursor: "pointer",
+};
+
+const editButtonStyle: CSSProperties = {
+  border: "none",
+  background: "rgba(59, 130, 246, 0.15)",
+  color: ACCENT_COLOR,
+  borderRadius: 6,
+  padding: "4px 10px",
+  fontSize: 12,
+  cursor: "pointer",
+};
+
+const wordActionsStyle: CSSProperties = {
+  display: "flex",
+  gap: 6,
+  flexShrink: 0,
 };

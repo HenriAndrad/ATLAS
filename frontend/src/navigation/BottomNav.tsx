@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { NavLink } from "react-router-dom";
-import { ACCENT_COLOR } from "../core/constants/appConstants";
+import { ACCENT_COLOR, GRADIENT_PRIMARY } from "../core/constants/appConstants";
 
 const TABS = [
   { to: "/", label: "Início", icon: "🏠" },
@@ -15,6 +15,7 @@ const TABS = [
 export function BottomNav() {
   return (
     <nav style={navStyle}>
+      <div style={topAccentStyle} />
       {TABS.map((tab) => (
         <NavLink
           key={tab.to}
@@ -34,11 +35,21 @@ export function BottomNav() {
 }
 
 const navStyle: CSSProperties = {
+  position: "relative",
   display: "flex",
   height: 64,
   background: "#000",
   borderTop: "1px solid rgba(255, 255, 255, 0.1)",
   flexShrink: 0,
+};
+
+const topAccentStyle: CSSProperties = {
+  position: "absolute",
+  top: -1,
+  left: 0,
+  right: 0,
+  height: 2,
+  background: GRADIENT_PRIMARY,
 };
 
 const tabStyle: CSSProperties = {

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { APP_NAME } from "../../core/constants/appConstants";
+import { APP_NAME, GRADIENT_PRIMARY } from "../../core/constants/appConstants";
 
 /// Aba "Início": tela de boas-vindas com atalho direto pro Detector,
 /// que é a funcionalidade principal do app.
@@ -31,7 +31,15 @@ const containerStyle: CSSProperties = {
   background: "#0a0a0a",
 };
 
-const logoStyle: CSSProperties = { fontSize: 32, fontWeight: 800, letterSpacing: 1 };
+const logoStyle: CSSProperties = {
+  fontSize: 32,
+  fontWeight: 800,
+  letterSpacing: 1,
+  backgroundImage: GRADIENT_PRIMARY,
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  backgroundClip: "text",
+};
 const taglineStyle: CSSProperties = {
   color: "rgba(255, 255, 255, 0.65)",
   fontSize: 14,
@@ -42,7 +50,8 @@ const ctaStyle: CSSProperties = {
   marginTop: 12,
   padding: "14px 28px",
   borderRadius: 24,
-  background: "#3B82F6",
+  background: GRADIENT_PRIMARY,
+  boxShadow: "0 8px 20px rgba(16, 185, 129, 0.25)",
   color: "#fff",
   fontWeight: 700,
   fontSize: 15,

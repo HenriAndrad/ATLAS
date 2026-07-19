@@ -73,6 +73,14 @@ export async function createAdminWord(word: WordInput): Promise<void> {
   if (!response.ok) throw new Error("Falha ao criar palavra.");
 }
 
+export async function updateAdminWord(id: number, word: WordInput): Promise<void> {
+  const response = await adminFetch(`/words/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(word),
+  });
+  if (!response.ok) throw new Error("Falha ao atualizar palavra.");
+}
+
 export async function deleteAdminWord(id: number): Promise<void> {
   const response = await adminFetch(`/words/${id}`, { method: "DELETE" });
   if (!response.ok) throw new Error("Falha ao excluir palavra.");

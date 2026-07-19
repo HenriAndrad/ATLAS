@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties, type RefObject } from "react";
 import type { DetectedObject } from "./useObjectDetection";
+import { MIN_CONFIDENT_LABEL_SCORE } from "../../core/constants/appConstants";
 
 interface DetectionOverlayProps {
   detections: DetectedObject[];
@@ -65,7 +66,9 @@ export function DetectionOverlay({ detections, videoRef, translations }: Detecti
           >
             <div style={labelContainerStyle}>
               <span style={translatedLabelStyle}>
-                {translations[detection.class] ?? detection.class}
+                {detection.score < MIN_CONFIDENT_LABEL_SCORE
+                  ? "❔ Objeto não identificado"
+                  : translations[detection.class] ?? detection.class}
               </span>
               <span style={originalLabelStyle}>
                 {detection.class} · {(detection.score * 100).toFixed(0)}%
