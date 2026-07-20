@@ -31,7 +31,15 @@ def _normalize_database_url(raw_url: str) -> str:
 
 
 engine = (
-    create_async_engine(_normalize_database_url(settings.database_url), echo=False)
+    create_async_engine(
+        _normalize_database_url(settings.database_url),
+        echo=False,
+        # O pooler do Supabase (Supavisor) não suporta prepared statements
+        # em modo transaction — desabilitar evita erros de "prepared
+        # statement already exists" quando conexões são reaproveitadas
+        # entre requisições diferentes. Inofensivo em modo session também.
+        connect_args={"statement_cache_size": 0},
+    )
     if settings.database_url
     else None
 )
