@@ -1,36 +1,23 @@
 import { API_BASE_URL } from "../../core/constants/appConstants";
-import { clearAdminCredentials, getAdminAuthHeader } from "./adminAuth";
+import { getStoredToken } from "../../core/auth/authStorage";
 
 async function adminFetch(path: string, options: RequestInit = {}): Promise<Response> {
-  const authHeader = getAdminAuthHeader();
+  const token = getStoredToken();
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/admin${path}`, {
+  return fetch(`${API_BASE_URL}/api/v1/admin${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
-      ...(authHeader ? { Authorization: authHeader } : {}),
+      ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
-
-  if (response.status === 401) {
-    clearAdminCredentials();
-  }
-
-  return response;
 }
 
 export interface AdminCategory {
   id: number;
   name: string;
   icon_emoji: string;
-}
-
-/// Tenta uma chamada autenticada simples só pra confirmar se as
-/// credenciais guardadas ainda são válidas.
-export async function verifyAdminCredentials(): Promise<boolean> {
-  const response = await adminFetch("/categories");
-  return response.ok;
 }
 
 export async function fetchAdminCategories(): Promise<AdminCategory[]> {
@@ -90,9 +77,8 @@ export async function deleteAdminWord(id: number): Promise<void> {
 
 export interface AdminVideo {
   id: number;
-  youtube_video_id: string;
   title: string;
-  thumbnail_url: string | null;
+  video_url: string;
   category: string;
   language_code: string;
 }
@@ -103,15 +89,19 @@ export async function fetchAdminVideos(): Promise<AdminVideo[]> {
   return response.json();
 }
 
-export async function createAdminVideo(video: {
-  youtube_url: string;
+export async function createAdminVideo(input: {
+  file: File;
+  title: string;
   category: string;
-  language_code: string;
+  languageCode: string;
 }): Promise<AdminVideo> {
-  const response = await adminFetch("/videos", {
-    method: "POST",
-    body: JSON.stringify(video),
-  });
+  const formData = new FormData();
+  formData.append("file", input.file);
+  formData.append("title", input.title);
+  formData.append("category", input.category);
+  formData.append("language_code", input.languageCode);
+
+  const response = await adminFetch("/videos", { method: "POST", body: formData });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(body?.detail ?? "Falha ao adicionar vídeo.");
@@ -134,22 +124,11 @@ export async function uploadDictionaryDocument(
   formData.append("file", file);
   formData.append("language_code", languageCode);
 
-  const authHeader = getAdminAuthHeader();
-  const response = await fetch(`${API_BASE_URL}/api/v1/admin/dictionary/upload`, {
-    method: "POST",
-    headers: authHeader ? { Authorization: authHeader } : undefined,
-    body: formData,
-  });
-
-  if (response.status === 401) {
-    clearAdminCredentials();
-  }
-
+  const response = await adminFetch("/dictionary/upload", { method: "POST", body: formData });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(body?.detail ?? "Falha ao importar o documento.");
   }
-
   const entries = await response.json();
   return { count: Array.isArray(entries) ? entries.length : 0 };
 }

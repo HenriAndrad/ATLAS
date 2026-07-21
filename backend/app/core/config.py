@@ -23,5 +23,16 @@ class Settings(BaseSettings):
     admin_username: str = "admin"
     admin_password: str = ""
 
+    # Chave usada para assinar os tokens de login — troque por um valor
+    # aleatório longo em produção (ex: gerado com `openssl rand -hex 32`).
+    auth_secret_key: str = "change-me-in-production"
+
+    # Supabase Storage — usado para guardar os vídeos enviados pelo admin.
+    # URL do projeto (Settings > API > Project URL) e a service_role key
+    # (Settings > API > service_role secret — NUNCA a chave anon aqui).
+    supabase_url: str = ""
+    supabase_service_role_key: str = ""
+    supabase_storage_bucket: str = "atlas-media"
+
 
 settings = Settings()

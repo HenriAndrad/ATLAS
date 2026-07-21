@@ -3,7 +3,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.security import require_admin
+from app.core.deps import require_admin_user
 from app.db.session import get_session
 from app.models.category import VocabularyCategory
 from app.models.dictionary_entry import DictionaryEntry
@@ -12,11 +12,11 @@ from app.models.video import VideoContent
 from app.models.word import VocabularyWord
 from app.schemas.admin import CategoryIn, CategoryOut, WordIn
 from app.schemas.dictionary import DictionaryEntryOut
-from app.schemas.video import VideoCreate, VideoOut
+from app.schemas.video import VideoOut
 from app.services.document_parser import DocumentParseError, parse_word_pairs
-from app.services.youtube_service import YoutubeError, extract_video_id, fetch_oembed_info
+from app.services.storage_service import StorageError, upload_video
 
-router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)])
+router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin_user)])
 
 
 @router.get("/categories", response_model=list[CategoryOut])
@@ -124,20 +124,28 @@ async def list_admin_videos(session: AsyncSession = Depends(get_session)) -> lis
 
 @router.post("/videos", response_model=VideoOut, status_code=201)
 async def create_video(
-    payload: VideoCreate, session: AsyncSession = Depends(get_session)
+    title: str = Form(...),
+    category: str = Form(...),
+    language_code: str = Form(...),
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
 ) -> VideoContent:
+    content = await file.read()
+
     try:
-        video_id = extract_video_id(payload.youtube_url)
-        title, thumbnail_url = await fetch_oembed_info(video_id)
-    except YoutubeError as exc:
+        video_url = await upload_video(
+            content=content,
+            filename=file.filename or "video.mp4",
+            content_type=file.content_type or "video/mp4",
+        )
+    except StorageError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     video = VideoContent(
-        youtube_video_id=video_id,
-        title=title,
-        thumbnail_url=thumbnail_url,
-        category=payload.category,
-        language_code=payload.language_code.lower(),
+        title=title.strip(),
+        video_url=video_url,
+        category=category.strip(),
+        language_code=language_code.lower(),
     )
     session.add(video)
     await session.commit()

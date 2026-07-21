@@ -1,30 +1,41 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { Play } from "lucide-react";
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
+import { Plus, X } from "lucide-react";
 import { fetchVideos } from "./videosApi";
+import { createAdminVideo } from "../admin/adminApi";
 import type { VideoContent } from "./types";
+import { useAuth } from "../../core/auth/AuthContext";
 import { useLanguageContext } from "../../core/context/LanguageContext";
 import {
+  ACCENT_COLOR,
   COLOR_BACKGROUND,
   COLOR_BORDER,
   COLOR_SURFACE,
   COLOR_TEXT_PRIMARY,
   COLOR_TEXT_SECONDARY,
+  GRADIENT_PRIMARY,
+  SUPPORTED_LANGUAGES,
 } from "../../core/constants/appConstants";
 
-/// Aba "Vídeos": lista os vídeos cadastrados pelo administrador (via
-/// link do YouTube), filtrados pelo idioma escolhido pelo usuário e
-/// agrupados por categoria. O vídeo é exibido embutido — o link nunca
-/// aparece pro aluno.
+/// Aba "Vídeos": lista os vídeos enviados pelo administrador (arquivo
+/// de verdade, guardado no Supabase Storage — não link do YouTube),
+/// filtrados pelo idioma escolhido e agrupados por categoria.
 export function VideosScreen() {
+  const { user } = useAuth();
   const { targetLanguage } = useLanguageContext();
   const [videos, setVideos] = useState<VideoContent[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [playingId, setPlayingId] = useState<number | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+
+  async function loadVideos() {
+    try {
+      setVideos(await fetchVideos());
+    } catch {
+      setError("Não foi possível carregar os vídeos agora.");
+    }
+  }
 
   useEffect(() => {
-    fetchVideos()
-      .then(setVideos)
-      .catch(() => setError("Não foi possível carregar os vídeos agora."));
+    loadVideos();
   }, []);
 
   const groupedByCategory = useMemo(() => {
@@ -40,11 +51,20 @@ export function VideosScreen() {
 
   return (
     <div style={containerStyle}>
-      <h1 style={titleStyle}>Vídeos</h1>
-      <p style={subtitleStyle}>Aulas, dicas e desafios de idiomas</p>
+      <div style={headerRowStyle}>
+        <div>
+          <h1 style={titleStyle}>Vídeos</h1>
+          <p style={subtitleStyle}>Aulas, dicas e desafios de idiomas</p>
+        </div>
+        {user?.is_admin && (
+          <button onClick={() => setIsAdding(true)} style={addButtonStyle} aria-label="Adicionar vídeo">
+            <Plus size={20} color="#fff" />
+          </button>
+        )}
+      </div>
 
       {error && <p style={messageStyle}>{error}</p>}
-      {!error && videos === null && <p style={messageStyle}>...</p>}
+      {!error && videos === null && <p style={messageStyle}>Carregando...</p>}
 
       {videos !== null && groupedByCategory.length === 0 && !error && (
         <div style={emptyStateStyle}>
@@ -59,30 +79,106 @@ export function VideosScreen() {
           <div style={videoListStyle}>
             {categoryVideos.map((video) => (
               <div key={video.id} style={videoCardStyle}>
-                {playingId === video.id ? (
-                  <iframe
-                    style={iframeStyle}
-                    src={`https://www.youtube.com/embed/${video.youtube_video_id}?autoplay=1`}
-                    title={video.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
-                  <button style={thumbnailButtonStyle} onClick={() => setPlayingId(video.id)}>
-                    {video.thumbnail_url && (
-                      <img src={video.thumbnail_url} alt="" style={thumbnailImageStyle} />
-                    )}
-                    <span style={playIconStyle}>
-                      <Play size={20} color="#fff" fill="#fff" />
-                    </span>
-                  </button>
-                )}
+                <video style={videoElementStyle} src={video.video_url} controls preload="metadata" />
                 <p style={videoTitleStyle}>{video.title}</p>
               </div>
             ))}
           </div>
         </div>
       ))}
+
+      {isAdding && (
+        <NewVideoModal
+          onClose={() => setIsAdding(false)}
+          onCreated={() => {
+            setIsAdding(false);
+            loadVideos();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function NewVideoModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [languageCode, setLanguageCode] = useState<string>(SUPPORTED_LANGUAGES[0]);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+
+    if (!file) {
+      setError("Escolha um arquivo de vídeo.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createAdminVideo({ file, title: title.trim(), category: category.trim(), languageCode });
+      onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao enviar o vídeo.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div style={overlayStyle} onClick={onClose}>
+      <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+        <div style={modalHeaderStyle}>
+          <h2 style={modalTitleStyle}>Novo vídeo</h2>
+          <button onClick={onClose} style={closeButtonStyle} aria-label="Fechar">
+            <X size={16} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={modalFormStyle}>
+          <p style={helpTextStyle}>
+            Escolha um vídeo da galeria do seu dispositivo (até 80 MB). O aluno vê o vídeo já
+            embutido no app.
+          </p>
+          <input
+            type="file"
+            accept="video/*"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            style={inputStyle}
+          />
+          <input
+            placeholder="Título do vídeo"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={inputStyle}
+            required
+          />
+          <input
+            placeholder="Categoria (ex: Aulas de gramática)"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            style={inputStyle}
+            required
+          />
+          <select
+            value={languageCode}
+            onChange={(e) => setLanguageCode(e.target.value)}
+            style={inputStyle}
+          >
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <option key={lang} value={lang}>
+                {lang.toUpperCase()}
+              </option>
+            ))}
+          </select>
+          {error && <p style={errorTextStyle}>{error}</p>}
+          <button type="submit" disabled={isSubmitting} style={submitButtonStyle}>
+            {isSubmitting ? "Enviando..." : "Adicionar vídeo"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
@@ -96,11 +192,27 @@ const containerStyle: CSSProperties = {
   fontFamily: "system-ui, sans-serif",
 };
 
+const headerRowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  marginBottom: 20,
+};
+
 const titleStyle: CSSProperties = { color: COLOR_TEXT_PRIMARY, fontSize: 22, fontWeight: 800, margin: 0 };
-const subtitleStyle: CSSProperties = {
-  color: COLOR_TEXT_SECONDARY,
-  fontSize: 13,
-  margin: "4px 0 20px",
+const subtitleStyle: CSSProperties = { color: COLOR_TEXT_SECONDARY, fontSize: 13, marginTop: 4 };
+
+const addButtonStyle: CSSProperties = {
+  width: 40,
+  height: 40,
+  borderRadius: "50%",
+  border: "none",
+  background: GRADIENT_PRIMARY,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  flexShrink: 0,
 };
 
 const messageStyle: CSSProperties = { color: COLOR_TEXT_SECONDARY, fontSize: 13, textAlign: "center" };
@@ -137,28 +249,7 @@ const videoCardStyle: CSSProperties = {
   border: `1px solid ${COLOR_BORDER}`,
 };
 
-const thumbnailButtonStyle: CSSProperties = {
-  position: "relative",
-  width: "100%",
-  aspectRatio: "16 / 9",
-  border: "none",
-  padding: 0,
-  background: "#000",
-  cursor: "pointer",
-};
-
-const thumbnailImageStyle: CSSProperties = { width: "100%", height: "100%", objectFit: "cover" };
-
-const playIconStyle: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: "rgba(0, 0, 0, 0.25)",
-};
-
-const iframeStyle: CSSProperties = { width: "100%", aspectRatio: "16 / 9", border: "none" };
+const videoElementStyle: CSSProperties = { width: "100%", display: "block", background: "#000" };
 
 const videoTitleStyle: CSSProperties = {
   color: COLOR_TEXT_PRIMARY,
@@ -166,4 +257,68 @@ const videoTitleStyle: CSSProperties = {
   fontWeight: 600,
   padding: "10px 12px",
   margin: 0,
+};
+
+const overlayStyle: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0, 0, 0, 0.5)",
+  display: "flex",
+  alignItems: "flex-end",
+  zIndex: 10,
+};
+
+const modalStyle: CSSProperties = {
+  width: "100%",
+  maxHeight: "85%",
+  overflowY: "auto",
+  background: COLOR_SURFACE,
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+  padding: 20,
+};
+
+const modalHeaderStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 16,
+};
+
+const modalTitleStyle: CSSProperties = { fontSize: 17, fontWeight: 700, margin: 0 };
+
+const closeButtonStyle: CSSProperties = {
+  width: 30,
+  height: 30,
+  borderRadius: "50%",
+  border: "none",
+  background: COLOR_BACKGROUND,
+  color: COLOR_TEXT_PRIMARY,
+  cursor: "pointer",
+};
+
+const modalFormStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 10 };
+
+const helpTextStyle: CSSProperties = { fontSize: 12, color: COLOR_TEXT_SECONDARY, margin: 0, lineHeight: 1.5 };
+
+const inputStyle: CSSProperties = {
+  padding: "12px 14px",
+  borderRadius: 10,
+  border: `1px solid ${COLOR_BORDER}`,
+  background: COLOR_BACKGROUND,
+  color: COLOR_TEXT_PRIMARY,
+  fontSize: 14,
+};
+
+const errorTextStyle: CSSProperties = { color: "#EF4444", fontSize: 13 };
+
+const submitButtonStyle: CSSProperties = {
+  padding: "13px 0",
+  borderRadius: 10,
+  border: "none",
+  background: ACCENT_COLOR,
+  color: "#fff",
+  fontWeight: 700,
+  fontSize: 14,
+  cursor: "pointer",
 };

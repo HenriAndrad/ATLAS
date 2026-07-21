@@ -27,6 +27,12 @@ def _normalize_database_url(raw_url: str) -> str:
         .replace("sslmode=disable", "ssl=disable")
     )
 
+    # Corrige barra extra logo após o esquema (ex: "asyncpg:///postgres..."
+    # em vez de "asyncpg://postgres...") — isso faz o usuário virar parte
+    # do path em vez de credencial, e a conexão autentica com o usuário
+    # errado sem erro óbvio até tentar conectar.
+    url = url.replace("+asyncpg:///", "+asyncpg://")
+
     return url
 
 

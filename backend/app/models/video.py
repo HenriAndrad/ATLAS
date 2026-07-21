@@ -7,8 +7,7 @@ class VideoContent(Base):
     __tablename__ = "videos"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    youtube_video_id: Mapped[str]
     title: Mapped[str]
-    thumbnail_url: Mapped[str | None] = mapped_column(default=None)
+    video_url: Mapped[str]
     category: Mapped[str]
     language_code: Mapped[str]
