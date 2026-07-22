@@ -347,6 +347,13 @@ const inputStyle: CSSProperties = {
 
 const errorTextStyle: CSSProperties = { color: "#EF4444", fontSize: 13 };
 
+const versionStyle: CSSProperties = {
+  marginTop: 24,
+  textAlign: "center",
+  color: COLOR_TEXT_SECONDARY,
+  fontSize: 12,
+};
+
 const submitButtonStyle: CSSProperties = {
   padding: "13px 0",
   borderRadius: 10,
