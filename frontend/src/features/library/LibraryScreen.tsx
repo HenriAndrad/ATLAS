@@ -1,8 +1,8 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Trash2 } from "lucide-react";
 import { fetchLibrary } from "./libraryApi";
-import { createAdminCategory } from "../admin/adminApi";
+import { createAdminCategory, deleteAdminCategory } from "../admin/adminApi";
 import type { LibraryCategory } from "./types";
 import { useAuth } from "../../core/auth/AuthContext";
 import {
@@ -58,10 +58,26 @@ export function LibraryScreen() {
 
       <div style={gridStyle}>
         {(categories ?? []).map((category) => (
-          <Link key={category.id} to={`/biblioteca/categoria/${category.id}`} style={cardStyle}>
-            <span style={emojiStyle}>{category.icon_emoji}</span>
-            <span style={nameStyle}>{category.name}</span>
-          </Link>
+          <div key={category.id} style={{ position: "relative" }}>
+            <Link to={`/biblioteca/categoria/${category.id}`} style={cardStyle}>
+              <span style={emojiStyle}>{category.icon_emoji}</span>
+              <span style={nameStyle}>{category.name}</span>
+            </Link>
+            {user?.is_admin && (
+              <button
+                onClick={async (e) => {
+                  e.preventDefault();
+                  if (!confirm(`Excluir a matéria "${category.name}" e todas as suas palavras?`)) return;
+                  await deleteAdminCategory(category.id);
+                  loadCategories();
+                }}
+                style={deleteBadgeStyle}
+                aria-label="Excluir matéria"
+              >
+                <Trash2 size={13} color="#fff" />
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
@@ -188,6 +204,21 @@ const cardStyle: CSSProperties = {
 
 const emojiStyle: CSSProperties = { fontSize: 32 };
 const nameStyle: CSSProperties = { fontSize: 14, fontWeight: 600, textAlign: "center" };
+
+const deleteBadgeStyle: CSSProperties = {
+  position: "absolute",
+  top: 8,
+  right: 8,
+  width: 24,
+  height: 24,
+  borderRadius: "50%",
+  border: "none",
+  background: "#EF4444",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+};
 
 const overlayStyle: CSSProperties = {
   position: "fixed",

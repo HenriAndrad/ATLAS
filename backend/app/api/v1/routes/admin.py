@@ -40,6 +40,18 @@ async def create_category(
     return category
 
 
+@router.delete("/categories/{category_id}", status_code=204)
+async def delete_category(category_id: int, session: AsyncSession = Depends(get_session)) -> None:
+    result = await session.execute(
+        select(VocabularyCategory).where(VocabularyCategory.id == category_id)
+    )
+    category = result.scalar_one_or_none()
+    if category is None:
+        raise HTTPException(status_code=404, detail="Matéria não encontrada.")
+    await session.delete(category)  # cascade remove as palavras dela também
+    await session.commit()
+
+
 @router.post("/words", status_code=201)
 async def create_word(payload: WordIn, session: AsyncSession = Depends(get_session)) -> dict[str, int]:
     word = VocabularyWord(

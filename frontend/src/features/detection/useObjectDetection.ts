@@ -32,7 +32,7 @@ export function useObjectDetection(
     let cancelled = false;
 
     cocoSsd
-      .load({ base: "lite_mobilenet_v2" }) // variante mais leve, prioriza velocidade
+      .load({ base: "mobilenet_v2" }) // versão completa: mais precisa que a "lite", ainda leve o suficiente
       .then((model) => {
         if (!cancelled) {
           modelRef.current = model;

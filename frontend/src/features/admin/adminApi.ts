@@ -38,6 +38,11 @@ export async function createAdminCategory(
   return response.json();
 }
 
+export async function deleteAdminCategory(id: number): Promise<void> {
+  const response = await adminFetch(`/categories/${id}`, { method: "DELETE" });
+  if (!response.ok) throw new Error("Falha ao excluir matéria.");
+}
+
 export interface WordTranslationInput {
   language_code: string;
   translated_text: string;
@@ -131,6 +136,11 @@ export async function uploadDictionaryDocument(
   }
   const entries = await response.json();
   return { count: Array.isArray(entries) ? entries.length : 0 };
+}
+
+export async function deleteAdminDictionaryEntry(id: number): Promise<void> {
+  const response = await adminFetch(`/dictionary/${id}`, { method: "DELETE" });
+  if (!response.ok) throw new Error("Falha ao excluir palavra do dicionário.");
 }
 
 // --- Contas de aluno criadas pelo admin ---

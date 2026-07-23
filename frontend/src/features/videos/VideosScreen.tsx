@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Trash2 } from "lucide-react";
 import { fetchVideos } from "./videosApi";
-import { createAdminVideo } from "../admin/adminApi";
+import { createAdminVideo, deleteAdminVideo } from "../admin/adminApi";
 import { fetchLibrary } from "../library/libraryApi";
 import type { LibraryCategory } from "../library/types";
 import type { VideoContent } from "./types";
@@ -82,7 +82,22 @@ export function VideosScreen() {
             {categoryVideos.map((video) => (
               <div key={video.id} style={videoCardStyle}>
                 <video style={videoElementStyle} src={video.video_url} controls preload="metadata" />
-                <p style={videoTitleStyle}>{video.title}</p>
+                <div style={videoFooterStyle}>
+                  <p style={videoTitleStyle}>{video.title}</p>
+                  {user?.is_admin && (
+                    <button
+                      onClick={async () => {
+                        if (!confirm(`Excluir o vídeo "${video.title}"?`)) return;
+                        await deleteAdminVideo(video.id);
+                        loadVideos();
+                      }}
+                      style={deleteIconButtonStyle}
+                      aria-label="Excluir vídeo"
+                    >
+                      <Trash2 size={14} color="#EF4444" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -279,8 +294,22 @@ const videoTitleStyle: CSSProperties = {
   color: COLOR_TEXT_PRIMARY,
   fontSize: 13,
   fontWeight: 600,
-  padding: "10px 12px",
   margin: 0,
+  flex: 1,
+};
+
+const videoFooterStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "10px 12px",
+};
+
+const deleteIconButtonStyle: CSSProperties = {
+  border: "none",
+  background: "transparent",
+  cursor: "pointer",
+  flexShrink: 0,
 };
 
 const overlayStyle: CSSProperties = {

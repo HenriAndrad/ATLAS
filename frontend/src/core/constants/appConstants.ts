@@ -14,10 +14,10 @@ export const COLOR_TEXT_PRIMARY = "var(--atlas-color-text-primary)";
 export const COLOR_TEXT_SECONDARY = "var(--atlas-color-text-secondary)";
 
 // Abaixo deste score, nem mostramos a caixa (ruído/falso positivo).
-export const MIN_DETECTION_SCORE = 0.5;
+export const MIN_DETECTION_SCORE = 0.6;
 // Abaixo deste score, mostramos "objeto não identificado" em vez de
 // arriscar uma tradução errada.
-export const MIN_CONFIDENT_LABEL_SCORE = 0.65;
+export const MIN_CONFIDENT_LABEL_SCORE = 0.75;
 
 // Em desenvolvimento, cai automaticamente no backend local.
 // Em produção (GitHub Pages), é definida por VITE_API_BASE_URL

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
-import { Search as SearchIcon, Volume2, Plus, X } from "lucide-react";
+import { Search as SearchIcon, Volume2, Plus, X, Trash2 } from "lucide-react";
 import { fetchLibrary } from "../library/libraryApi";
 import type { LibraryCategory } from "../library/types";
 import { fetchDictionaryEntries } from "./dictionaryApi";
-import { uploadDictionaryDocument } from "../admin/adminApi";
+import { uploadDictionaryDocument, deleteAdminWord, deleteAdminDictionaryEntry } from "../admin/adminApi";
 import { useAuth } from "../../core/auth/AuthContext";
 import { useLanguageContext } from "../../core/context/LanguageContext";
+import { useAuth } from "../../core/auth/AuthContext";
 import { speakText } from "../tts/speakText";
 import {
   ACCENT_COLOR,
@@ -131,21 +132,41 @@ export function DictionaryScreen() {
 
       <div style={listStyle}>
         {filteredRows.map((row) => (
-          <button
-            key={row.id}
-            style={itemStyle}
-            onClick={() => speakText(row.translated, targetLanguage)}
-          >
-            <span style={emojiStyle}>{row.emoji ?? "🔤"}</span>
-            <span style={textColumnStyle}>
-              <span style={translatedStyle}>{row.translated}</span>
-              <span style={originalStyle}>
-                {row.original}
-                {row.source ? ` • ${row.source}` : ""}
+          <div key={row.id} style={itemStyle}>
+            <button
+              style={itemButtonStyle}
+              onClick={() => speakText(row.translated, targetLanguage)}
+            >
+              <span style={emojiStyle}>{row.emoji ?? "🔤"}</span>
+              <span style={textColumnStyle}>
+                <span style={translatedStyle}>{row.translated}</span>
+                <span style={originalStyle}>
+                  {row.original}
+                  {row.source ? ` • ${row.source}` : ""}
+                </span>
               </span>
-            </span>
-            <Volume2 size={16} color={ACCENT_COLOR} />
-          </button>
+              <Volume2 size={16} color={ACCENT_COLOR} />
+            </button>
+            {user?.is_admin && (
+              <button
+                onClick={async () => {
+                  if (!confirm(`Excluir "${row.original}"?`)) return;
+                  const [kind, rawId] = row.id.split("-");
+                  const id = Number(rawId);
+                  if (kind === "word") {
+                    await deleteAdminWord(id);
+                  } else {
+                    await deleteAdminDictionaryEntry(id);
+                  }
+                  loadData();
+                }}
+                style={deleteIconButtonStyle}
+                aria-label="Excluir"
+              >
+                <Trash2 size={16} color="#EF4444" />
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
@@ -301,13 +322,31 @@ const listStyle: CSSProperties = { display: "flex", flexDirection: "column", gap
 const itemStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: 12,
-  padding: 12,
+  gap: 8,
+  padding: 8,
   borderRadius: 14,
   background: COLOR_SURFACE,
   border: `1px solid ${COLOR_BORDER}`,
+};
+
+const itemButtonStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  flex: 1,
+  border: "none",
+  background: "transparent",
+  padding: 4,
   textAlign: "left",
   cursor: "pointer",
+};
+
+const deleteIconButtonStyle: CSSProperties = {
+  border: "none",
+  background: "transparent",
+  cursor: "pointer",
+  flexShrink: 0,
+  padding: 4,
 };
 
 const emojiStyle: CSSProperties = { fontSize: 22 };

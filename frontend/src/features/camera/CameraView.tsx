@@ -4,6 +4,7 @@ import { useCamera } from "./useCamera";
 import { useObjectDetection } from "../detection/useObjectDetection";
 import { DetectionOverlay } from "../detection/DetectionOverlay";
 import { getPrimaryDetection } from "../detection/getPrimaryDetection";
+import { useStableDetection } from "../detection/useStableDetection";
 import { useTranslatedLabels } from "../translation/useTranslatedLabels";
 import { speakText } from "../tts/speakText";
 import { useTranslation } from "../../core/i18n/useTranslation";
@@ -54,11 +55,12 @@ export function CameraView({ targetLanguage, onChangeLanguage, onWordSpoken, rec
   );
 
   const primaryDetection = getPrimaryDetection(detections, videoRef.current);
+  const stablePrimaryDetection = useStableDetection(primaryDetection);
   const isPrimaryConfident =
-    primaryDetection !== null && primaryDetection.score >= MIN_CONFIDENT_LABEL_SCORE;
+    stablePrimaryDetection !== null && stablePrimaryDetection.score >= MIN_CONFIDENT_LABEL_SCORE;
   const primaryTranslatedText =
-    primaryDetection && isPrimaryConfident
-      ? translations[primaryDetection.class] ?? primaryDetection.class
+    stablePrimaryDetection && isPrimaryConfident
+      ? translations[stablePrimaryDetection.class] ?? stablePrimaryDetection.class
       : null;
 
   const statusCaption: Record<string, string> = {
@@ -100,10 +102,10 @@ export function CameraView({ targetLanguage, onChangeLanguage, onWordSpoken, rec
           <button
             disabled={!primaryTranslatedText}
             onClick={() => {
-              if (primaryTranslatedText && primaryDetection) {
+              if (primaryTranslatedText && stablePrimaryDetection) {
                 speakText(primaryTranslatedText, targetLanguage);
                 onWordSpoken?.({
-                  original: primaryDetection.class,
+                  original: stablePrimaryDetection.class,
                   translated: primaryTranslatedText,
                 });
               }

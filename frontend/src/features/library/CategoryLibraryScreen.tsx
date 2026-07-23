@@ -1,11 +1,11 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Trash2 } from "lucide-react";
 import { fetchLibrary } from "./libraryApi";
 import type { LibraryCategory } from "./types";
 import { fetchVideos } from "../videos/videosApi";
 import type { VideoContent } from "../videos/types";
-import { createAdminWord } from "../admin/adminApi";
+import { createAdminWord, deleteAdminWord, deleteAdminVideo } from "../admin/adminApi";
 import { speakText } from "../tts/speakText";
 import { useAuth } from "../../core/auth/AuthContext";
 import { useLanguageContext } from "../../core/context/LanguageContext";
@@ -92,16 +92,31 @@ export function CategoryLibraryScreen() {
 
       <div style={wordsGridStyle}>
         {wordsWithTranslation.map(({ word, translation }) => (
-          <button
-            key={word.id}
-            style={wordCardStyle}
-            onClick={() => speakText(translation.translated_text, targetLanguage)}
-          >
-            <span style={wordEmojiStyle}>{word.emoji ?? "🔤"}</span>
-            <span style={wordOriginalStyle}>{word.original_en}</span>
-            <span style={wordTranslatedStyle}>→ {translation.translated_text}</span>
-            <span style={wordSpeakerStyle}>🔊</span>
-          </button>
+          <div key={word.id} style={{ position: "relative" }}>
+            <button
+              style={wordCardStyle}
+              onClick={() => speakText(translation.translated_text, targetLanguage)}
+            >
+              <span style={wordEmojiStyle}>{word.emoji ?? "🔤"}</span>
+              <span style={wordOriginalStyle}>{word.original_en}</span>
+              <span style={wordTranslatedStyle}>→ {translation.translated_text}</span>
+              <span style={wordSpeakerStyle}>🔊</span>
+            </button>
+            {user?.is_admin && (
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!confirm(`Excluir a palavra "${word.original_en}"?`)) return;
+                  await deleteAdminWord(word.id);
+                  loadCategories();
+                }}
+                style={deleteBadgeStyle}
+                aria-label="Excluir palavra"
+              >
+                <Trash2 size={12} color="#fff" />
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
@@ -112,7 +127,22 @@ export function CategoryLibraryScreen() {
             {categoryVideos.map((video) => (
               <div key={video.id} style={videoCardStyle}>
                 <video style={videoElementStyle} src={video.video_url} controls preload="metadata" />
-                <p style={videoTitleStyle}>{video.title}</p>
+                <div style={videoFooterStyle}>
+                  <p style={videoTitleStyle}>{video.title}</p>
+                  {user?.is_admin && (
+                    <button
+                      onClick={async () => {
+                        if (!confirm(`Excluir o vídeo "${video.title}"?`)) return;
+                        await deleteAdminVideo(video.id);
+                        loadCategories();
+                      }}
+                      style={deleteIconButtonStyle}
+                      aria-label="Excluir vídeo"
+                    >
+                      <Trash2 size={14} color="#EF4444" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -303,8 +333,37 @@ const videoTitleStyle: CSSProperties = {
   color: COLOR_TEXT_PRIMARY,
   fontSize: 13,
   fontWeight: 600,
-  padding: "10px 12px",
   margin: 0,
+  flex: 1,
+};
+
+const videoFooterStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "10px 12px",
+};
+
+const deleteIconButtonStyle: CSSProperties = {
+  border: "none",
+  background: "transparent",
+  cursor: "pointer",
+  flexShrink: 0,
+};
+
+const deleteBadgeStyle: CSSProperties = {
+  position: "absolute",
+  top: 6,
+  right: 6,
+  width: 20,
+  height: 20,
+  borderRadius: "50%",
+  border: "none",
+  background: "#EF4444",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
 };
 
 const overlayStyle: CSSProperties = {
