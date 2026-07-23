@@ -3,6 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { Plus, X } from "lucide-react";
 import { fetchLibrary } from "./libraryApi";
 import type { LibraryCategory } from "./types";
+import { fetchVideos } from "../videos/videosApi";
+import type { VideoContent } from "../videos/types";
 import { createAdminWord } from "../admin/adminApi";
 import { speakText } from "../tts/speakText";
 import { useAuth } from "../../core/auth/AuthContext";
@@ -27,12 +29,15 @@ export function CategoryLibraryScreen() {
   const { targetLanguage } = useLanguageContext();
 
   const [categories, setCategories] = useState<LibraryCategory[] | null>(null);
+  const [videos, setVideos] = useState<VideoContent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
   async function loadCategories() {
     try {
-      setCategories(await fetchLibrary());
+      const [libraryData, videosData] = await Promise.all([fetchLibrary(), fetchVideos()]);
+      setCategories(libraryData);
+      setVideos(videosData);
     } catch {
       setError("Não foi possível carregar o conteúdo agora.");
     }
@@ -43,6 +48,10 @@ export function CategoryLibraryScreen() {
   }, []);
 
   const category = categories?.find((c) => String(c.id) === categoryId) ?? null;
+
+  const categoryVideos = videos.filter(
+    (video) => video.category === category?.name && video.language_code === targetLanguage,
+  );
 
   const wordsWithTranslation = (category?.words ?? [])
     .map((word) => ({
@@ -95,6 +104,20 @@ export function CategoryLibraryScreen() {
           </button>
         ))}
       </div>
+
+      {categoryVideos.length > 0 && (
+        <>
+          <p style={videosSectionTitleStyle}>🎬 Vídeos desta matéria</p>
+          <div style={videosListStyle}>
+            {categoryVideos.map((video) => (
+              <div key={video.id} style={videoCardStyle}>
+                <video style={videoElementStyle} src={video.video_url} controls preload="metadata" />
+                <p style={videoTitleStyle}>{video.title}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {isAdding && category && (
         <NewWordModal
@@ -257,6 +280,32 @@ const wordEmojiStyle: CSSProperties = { fontSize: 24 };
 const wordOriginalStyle: CSSProperties = { fontSize: 12, color: COLOR_TEXT_SECONDARY };
 const wordTranslatedStyle: CSSProperties = { fontSize: 14, fontWeight: 600 };
 const wordSpeakerStyle: CSSProperties = { position: "absolute", top: 10, right: 10, fontSize: 14 };
+
+const videosSectionTitleStyle: CSSProperties = {
+  color: COLOR_TEXT_PRIMARY,
+  fontSize: 15,
+  fontWeight: 700,
+  margin: "24px 0 12px",
+};
+
+const videosListStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 12 };
+
+const videoCardStyle: CSSProperties = {
+  borderRadius: 16,
+  overflow: "hidden",
+  background: COLOR_SURFACE,
+  border: `1px solid ${COLOR_BORDER}`,
+};
+
+const videoElementStyle: CSSProperties = { width: "100%", display: "block", background: "#000" };
+
+const videoTitleStyle: CSSProperties = {
+  color: COLOR_TEXT_PRIMARY,
+  fontSize: 13,
+  fontWeight: 600,
+  padding: "10px 12px",
+  margin: 0,
+};
 
 const overlayStyle: CSSProperties = {
   position: "fixed",

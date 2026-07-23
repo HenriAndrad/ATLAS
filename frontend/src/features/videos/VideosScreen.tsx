@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from
 import { Plus, X } from "lucide-react";
 import { fetchVideos } from "./videosApi";
 import { createAdminVideo } from "../admin/adminApi";
+import { fetchLibrary } from "../library/libraryApi";
+import type { LibraryCategory } from "../library/types";
 import type { VideoContent } from "./types";
 import { useAuth } from "../../core/auth/AuthContext";
 import { useLanguageContext } from "../../core/context/LanguageContext";
@@ -104,9 +106,21 @@ function NewVideoModal({ onClose, onCreated }: { onClose: () => void; onCreated:
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<LibraryCategory[]>([]);
   const [languageCode, setLanguageCode] = useState<string>(SUPPORTED_LANGUAGES[0]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchLibrary()
+      .then((data) => {
+        setCategories(data);
+        if (data.length > 0) setCategory(data[0].name);
+      })
+      .catch(() => {
+        // Se a Biblioteca não carregar, o admin ainda digita a categoria manualmente.
+      });
+  }, []);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -155,13 +169,23 @@ function NewVideoModal({ onClose, onCreated }: { onClose: () => void; onCreated:
             style={inputStyle}
             required
           />
-          <input
-            placeholder="Categoria (ex: Aulas de gramática)"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            style={inputStyle}
-            required
-          />
+          {categories.length > 0 ? (
+            <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
+              {categories.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.icon_emoji} {c.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              placeholder="Matéria (ex: Matemática) — crie uma na Biblioteca primeiro"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              style={inputStyle}
+              required
+            />
+          )}
           <select
             value={languageCode}
             onChange={(e) => setLanguageCode(e.target.value)}
