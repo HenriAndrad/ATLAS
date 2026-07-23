@@ -81,7 +81,17 @@ export function VideosScreen() {
           <div style={videoListStyle}>
             {categoryVideos.map((video) => (
               <div key={video.id} style={videoCardStyle}>
-                <video style={videoElementStyle} src={video.video_url} controls preload="metadata" />
+                {video.video_type === "youtube" ? (
+                  <iframe
+                    style={videoElementStyle}
+                    src={video.video_url}
+                    title={video.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video style={videoElementStyle} src={video.video_url} controls preload="metadata" />
+                )}
                 <div style={videoFooterStyle}>
                   <p style={videoTitleStyle}>{video.title}</p>
                   {user?.is_admin && (
@@ -118,7 +128,9 @@ export function VideosScreen() {
 }
 
 function NewVideoModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [sourceMode, setSourceMode] = useState<"file" | "youtube">("file");
   const [file, setFile] = useState<File | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState<LibraryCategory[]>([]);
@@ -141,17 +153,27 @@ function NewVideoModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     event.preventDefault();
     setError(null);
 
-    if (!file) {
+    if (sourceMode === "file" && !file) {
       setError("Escolha um arquivo de vídeo.");
+      return;
+    }
+    if (sourceMode === "youtube" && !youtubeUrl.trim()) {
+      setError("Cole um link do YouTube.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await createAdminVideo({ file, title: title.trim(), category: category.trim(), languageCode });
+      await createAdminVideo({
+        file: sourceMode === "file" ? file ?? undefined : undefined,
+        youtubeUrl: sourceMode === "youtube" ? youtubeUrl.trim() : undefined,
+        title: title.trim(),
+        category: category.trim(),
+        languageCode,
+      });
       onCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao enviar o vídeo.");
+      setError(err instanceof Error ? err.message : "Falha ao adicionar o vídeo.");
     } finally {
       setIsSubmitting(false);
     }
@@ -166,17 +188,50 @@ function NewVideoModal({ onClose, onCreated }: { onClose: () => void; onCreated:
             <X size={16} />
           </button>
         </div>
+
+        <div style={sourceTabsStyle}>
+          <button
+            type="button"
+            onClick={() => setSourceMode("file")}
+            style={{ ...sourceTabStyle, ...(sourceMode === "file" ? sourceTabActiveStyle : {}) }}
+          >
+            Arquivo
+          </button>
+          <button
+            type="button"
+            onClick={() => setSourceMode("youtube")}
+            style={{ ...sourceTabStyle, ...(sourceMode === "youtube" ? sourceTabActiveStyle : {}) }}
+          >
+            Link do YouTube
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit} style={modalFormStyle}>
-          <p style={helpTextStyle}>
-            Escolha um vídeo da galeria do seu dispositivo (até 80 MB). O aluno vê o vídeo já
-            embutido no app.
-          </p>
-          <input
-            type="file"
-            accept="video/*"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            style={inputStyle}
-          />
+          {sourceMode === "file" ? (
+            <>
+              <p style={helpTextStyle}>
+                Escolha um vídeo da galeria do seu dispositivo (até 80 MB).
+              </p>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                style={inputStyle}
+              />
+            </>
+          ) : (
+            <>
+              <p style={helpTextStyle}>
+                Cole o link do vídeo público do YouTube — ele abre embutido direto na página.
+              </p>
+              <input
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                style={inputStyle}
+              />
+            </>
+          )}
           <input
             placeholder="Título do vídeo"
             value={title}
@@ -288,7 +343,13 @@ const videoCardStyle: CSSProperties = {
   border: `1px solid ${COLOR_BORDER}`,
 };
 
-const videoElementStyle: CSSProperties = { width: "100%", display: "block", background: "#000" };
+const videoElementStyle: CSSProperties = {
+  width: "100%",
+  aspectRatio: "16 / 9",
+  display: "block",
+  background: "#000",
+  border: "none",
+};
 
 const videoTitleStyle: CSSProperties = {
   color: COLOR_TEXT_PRIMARY,
@@ -353,6 +414,26 @@ const closeButtonStyle: CSSProperties = {
 const modalFormStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 10 };
 
 const helpTextStyle: CSSProperties = { fontSize: 12, color: COLOR_TEXT_SECONDARY, margin: 0, lineHeight: 1.5 };
+
+const sourceTabsStyle: CSSProperties = { display: "flex", gap: 8, marginBottom: 12 };
+
+const sourceTabStyle: CSSProperties = {
+  flex: 1,
+  padding: "8px 0",
+  borderRadius: 8,
+  border: `1px solid ${COLOR_BORDER}`,
+  background: "transparent",
+  color: COLOR_TEXT_SECONDARY,
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
+const sourceTabActiveStyle: CSSProperties = {
+  background: ACCENT_COLOR,
+  color: "#fff",
+  borderColor: "transparent",
+};
 
 const inputStyle: CSSProperties = {
   padding: "12px 14px",

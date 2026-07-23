@@ -7,5 +7,6 @@ class VideoOut(BaseModel):
     id: int
     title: str
     video_url: str
+    video_type: str
     category: str
     language_code: str

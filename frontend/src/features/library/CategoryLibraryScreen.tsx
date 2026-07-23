@@ -126,7 +126,17 @@ export function CategoryLibraryScreen() {
           <div style={videosListStyle}>
             {categoryVideos.map((video) => (
               <div key={video.id} style={videoCardStyle}>
-                <video style={videoElementStyle} src={video.video_url} controls preload="metadata" />
+                {video.video_type === "youtube" ? (
+                  <iframe
+                    style={videoElementStyle}
+                    src={video.video_url}
+                    title={video.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video style={videoElementStyle} src={video.video_url} controls preload="metadata" />
+                )}
                 <div style={videoFooterStyle}>
                   <p style={videoTitleStyle}>{video.title}</p>
                   {user?.is_admin && (
@@ -327,7 +337,13 @@ const videoCardStyle: CSSProperties = {
   border: `1px solid ${COLOR_BORDER}`,
 };
 
-const videoElementStyle: CSSProperties = { width: "100%", display: "block", background: "#000" };
+const videoElementStyle: CSSProperties = {
+  width: "100%",
+  aspectRatio: "16 / 9",
+  display: "block",
+  background: "#000",
+  border: "none",
+};
 
 const videoTitleStyle: CSSProperties = {
   color: COLOR_TEXT_PRIMARY,

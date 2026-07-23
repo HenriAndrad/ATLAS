@@ -19,6 +19,7 @@ from app.schemas.video import VideoOut
 from app.services.auth_service import hash_password, is_email_domain_allowed
 from app.services.document_parser import DocumentParseError, parse_word_pairs
 from app.services.storage_service import StorageError, upload_video
+from app.services.youtube_service import YoutubeError, extract_video_id
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin_user)])
 
@@ -143,23 +144,37 @@ async def create_video(
     title: str = Form(...),
     category: str = Form(...),
     language_code: str = Form(...),
-    file: UploadFile = File(...),
+    file: UploadFile | None = File(None),
+    youtube_url: str | None = Form(None),
     session: AsyncSession = Depends(get_session),
 ) -> VideoContent:
-    content = await file.read()
-
-    try:
-        video_url = await upload_video(
-            content=content,
-            filename=file.filename or "video.mp4",
-            content_type=file.content_type or "video/mp4",
+    if file is not None and file.filename:
+        content = await file.read()
+        try:
+            video_url = await upload_video(
+                content=content,
+                filename=file.filename or "video.mp4",
+                content_type=file.content_type or "video/mp4",
+            )
+        except StorageError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        video_type = "upload"
+    elif youtube_url:
+        try:
+            video_id = extract_video_id(youtube_url)
+        except YoutubeError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        video_url = f"https://www.youtube.com/embed/{video_id}"
+        video_type = "youtube"
+    else:
+        raise HTTPException(
+            status_code=422, detail="Envie um arquivo de vídeo ou um link do YouTube."
         )
-    except StorageError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     video = VideoContent(
         title=title.strip(),
         video_url=video_url,
+        video_type=video_type,
         category=category.strip(),
         language_code=language_code.lower(),
     )

@@ -84,6 +84,7 @@ export interface AdminVideo {
   id: number;
   title: string;
   video_url: string;
+  video_type: "upload" | "youtube";
   category: string;
   language_code: string;
 }
@@ -95,13 +96,15 @@ export async function fetchAdminVideos(): Promise<AdminVideo[]> {
 }
 
 export async function createAdminVideo(input: {
-  file: File;
+  file?: File;
+  youtubeUrl?: string;
   title: string;
   category: string;
   languageCode: string;
 }): Promise<AdminVideo> {
   const formData = new FormData();
-  formData.append("file", input.file);
+  if (input.file) formData.append("file", input.file);
+  if (input.youtubeUrl) formData.append("youtube_url", input.youtubeUrl);
   formData.append("title", input.title);
   formData.append("category", input.category);
   formData.append("language_code", input.languageCode);
