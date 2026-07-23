@@ -6,7 +6,6 @@ import { fetchDictionaryEntries } from "./dictionaryApi";
 import { uploadDictionaryDocument, deleteAdminWord, deleteAdminDictionaryEntry } from "../admin/adminApi";
 import { useAuth } from "../../core/auth/AuthContext";
 import { useLanguageContext } from "../../core/context/LanguageContext";
-import { useAuth } from "../../core/auth/AuthContext";
 import { speakText } from "../tts/speakText";
 import {
   ACCENT_COLOR,
