@@ -178,3 +178,19 @@ export async function deleteAdminUser(id: number): Promise<void> {
   const response = await adminFetch(`/users/${id}`, { method: "DELETE" });
   if (!response.ok) throw new Error("Falha ao excluir usuário.");
 }
+
+// --- Estatísticas ---
+
+export interface AdminStats {
+  users: number;
+  categories: number;
+  words: number;
+  videos: number;
+  dictionary_entries: number;
+}
+
+export async function fetchAdminStats(): Promise<AdminStats> {
+  const response = await adminFetch("/stats");
+  if (!response.ok) throw new Error("Falha ao carregar estatísticas.");
+  return response.json();
+}

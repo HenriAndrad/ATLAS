@@ -1,7 +1,7 @@
 import datetime
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -288,3 +288,23 @@ async def delete_user(user_id: int, session: AsyncSession = Depends(get_session)
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
     await session.delete(user)
     await session.commit()
+
+
+# ---------------------------------------------------------------------------
+# Estatísticas
+# ---------------------------------------------------------------------------
+
+
+@router.get("/stats")
+async def get_stats(session: AsyncSession = Depends(get_session)) -> dict[str, int]:
+    async def count(model: type) -> int:
+        result = await session.execute(select(func.count()).select_from(model))
+        return result.scalar_one()
+
+    return {
+        "users": await count(User),
+        "categories": await count(VocabularyCategory),
+        "words": await count(VocabularyWord),
+        "videos": await count(VideoContent),
+        "dictionary_entries": await count(DictionaryEntry),
+    }

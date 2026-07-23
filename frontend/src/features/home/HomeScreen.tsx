@@ -1,8 +1,10 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, Camera, Search, Star, Globe, Settings, Film, GraduationCap } from "lucide-react";
+import { BookOpen, Camera, Search, Star, Globe, Settings, Film, GraduationCap, Bell, X } from "lucide-react";
 import { useTranslation } from "../../core/i18n/useTranslation";
 import type { TranslationKey } from "../../core/i18n/translations";
+import { useAppSettingsContext } from "../../core/context/AppSettingsContext";
+import { useDailyReminder } from "./useDailyReminder";
 import {
   COLOR_BACKGROUND,
   COLOR_BORDER,
@@ -32,11 +34,23 @@ const SHORTCUTS: {
 /// principais funcionalidades do app.
 export function HomeScreen() {
   const t = useTranslation();
+  const { settings } = useAppSettingsContext();
+  const { shouldShow, dismiss } = useDailyReminder(settings.dailyReminders);
 
   return (
     <div style={containerStyle}>
       <p style={greetingStyle}>{t("home.greeting")}</p>
       <h1 style={titleStyle}>{t("home.title")}</h1>
+
+      {shouldShow && (
+        <div style={reminderStyle}>
+          <Bell size={16} color="#3B82F6" />
+          <span style={reminderTextStyle}>Hora de praticar um pouco hoje! 🎯</span>
+          <button onClick={dismiss} style={reminderCloseStyle} aria-label="Fechar lembrete">
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       <div style={bannerStyle}>
         <span style={bannerIconStyle}>
@@ -77,6 +91,31 @@ const titleStyle: CSSProperties = {
   fontSize: 22,
   fontWeight: 800,
   margin: "2px 0 20px",
+};
+
+const reminderStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  padding: "10px 14px",
+  borderRadius: 12,
+  background: "#EFF6FF",
+  marginBottom: 16,
+};
+
+const reminderTextStyle: CSSProperties = {
+  flex: 1,
+  fontSize: 13,
+  fontWeight: 600,
+  color: COLOR_TEXT_PRIMARY,
+};
+
+const reminderCloseStyle: CSSProperties = {
+  border: "none",
+  background: "transparent",
+  color: COLOR_TEXT_SECONDARY,
+  cursor: "pointer",
+  flexShrink: 0,
 };
 
 const bannerStyle: CSSProperties = {

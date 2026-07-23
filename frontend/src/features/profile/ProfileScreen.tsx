@@ -1,11 +1,13 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
-import { LogOut, ShieldCheck, User, UserPlus, X } from "lucide-react";
+import { LogOut, ShieldCheck, User, UserPlus, X, Users, BookOpen, Type, Film, Search } from "lucide-react";
 import { useAuth } from "../../core/auth/AuthContext";
 import {
   createAdminUser,
   deleteAdminUser,
   fetchAdminUsers,
+  fetchAdminStats,
   type AdminManagedUser,
+  type AdminStats,
 } from "../admin/adminApi";
 import {
   ACCENT_COLOR,
@@ -47,9 +49,45 @@ export function ProfileScreen() {
         Sair
       </button>
 
+      {user?.is_admin && <StatsPanel />}
       {user?.is_admin && <AdminUsersSection />}
 
       <p style={versionStyle}>{APP_NAME} · v0.1</p>
+    </div>
+  );
+}
+
+function StatsPanel() {
+  const [stats, setStats] = useState<AdminStats | null>(null);
+
+  useEffect(() => {
+    fetchAdminStats()
+      .then(setStats)
+      .catch(() => setStats(null));
+  }, []);
+
+  const cards = [
+    { label: "Alunos", value: stats?.users, Icon: Users, color: "#3B82F6" },
+    { label: "Matérias", value: stats?.categories, Icon: BookOpen, color: "#10B981" },
+    { label: "Palavras", value: stats?.words, Icon: Type, color: "#F59E0B" },
+    { label: "Vídeos", value: stats?.videos, Icon: Film, color: "#EC4899" },
+    { label: "Dicionário", value: stats?.dictionary_entries, Icon: Search, color: "#8B5CF6" },
+  ];
+
+  return (
+    <div style={sectionStyle}>
+      <p style={sectionTitleStyle}>Painel</p>
+      <div style={statsGridStyle}>
+        {cards.map((card) => (
+          <div key={card.label} style={statCardStyle}>
+            <span style={{ ...statIconStyle, background: card.color }}>
+              <card.Icon size={16} color="#fff" />
+            </span>
+            <span style={statValueStyle}>{card.value ?? "..."}</span>
+            <span style={statLabelStyle}>{card.label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -249,6 +287,36 @@ const logoutButtonStyle: CSSProperties = {
 };
 
 const sectionStyle: CSSProperties = { marginTop: 28 };
+
+const statsGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, 1fr)",
+  gap: 10,
+};
+
+const statCardStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  gap: 4,
+  padding: 14,
+  borderRadius: 14,
+  background: COLOR_SURFACE,
+  border: `1px solid ${COLOR_BORDER}`,
+};
+
+const statIconStyle: CSSProperties = {
+  width: 28,
+  height: 28,
+  borderRadius: 8,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 2,
+};
+
+const statValueStyle: CSSProperties = { fontSize: 20, fontWeight: 800, color: COLOR_TEXT_PRIMARY };
+const statLabelStyle: CSSProperties = { fontSize: 12, color: COLOR_TEXT_SECONDARY };
 
 const sectionHeaderStyle: CSSProperties = {
   display: "flex",
